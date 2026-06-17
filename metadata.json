@@ -1,0 +1,6 @@
+{
+  "name": "Zestwear Uniforms",
+  "description": "Premium institution-focused uniform management and ordering platform for schools, colleges, and universities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
