@@ -7,8 +7,10 @@ interface FeaturedInstitutionsProps {
 }
 
 export default function FeaturedInstitutions({ institutions, onSelectInstitution }: FeaturedInstitutionsProps) {
-  // Only display active, verified institutions
-  const displayedInsts = institutions.filter(inst => inst.isVerified && !inst.isSuspended);
+  // Only display active, verified, and explicitly featured institutions
+  const displayedInsts = institutions.filter(inst => inst.isVerified && !inst.isSuspended && inst.isFeatured).slice(0, 6);
+
+  if (displayedInsts.length === 0) return null;
 
   return (
     <section id="featured-institutions" className="py-24 bg-white dark:bg-black">

@@ -48,7 +48,8 @@ export default function AdminPanel({
   settings,
   setSettings
 }: AdminPanelProps) {
-  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard' | 'slides' | 'institutions' | 'uniforms' | 'categories' | 'notices' | 'gallery' | 'contacts' | 'settings'>('dashboard');
+  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard' | 'slides' | 'institutions' | 'categories' | 'notices' | 'contacts' | 'settings'>('dashboard');
+  const [selectedInstId, setSelectedInstId] = useState<string | null>(null);
 
   // Multi-use Form States
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -152,6 +153,48 @@ export default function AdminPanel({
     triggerToast('Institution suspension visibility toggled.');
   };
 
+  const handleTrustedToggleInst = (id: string) => {
+    setInstitutions(prev => {
+      const currentTrustedCount = prev.filter(i => i.isTrusted).length;
+      return prev.map(inst => {
+        if (inst.id === id) {
+          if (!inst.isTrusted && currentTrustedCount >= 6) {
+            triggerToast('Maximum of 6 institutions can be featured in the Trusted Banner.');
+            return inst;
+          }
+          return { ...inst, isTrusted: !inst.isTrusted };
+        }
+        return inst;
+      });
+    });
+    if (institutions.find(i => i.id === id)?.isTrusted) {
+      triggerToast('Institution removed from Trusted Banner.');
+    } else {
+      triggerToast('Institution added to Trusted Banner.');
+    }
+  };
+
+  const handleFeaturedToggleInst = (id: string) => {
+    setInstitutions(prev => {
+      const currentFeaturedCount = prev.filter(i => i.isFeatured).length;
+      return prev.map(inst => {
+        if (inst.id === id) {
+          if (!inst.isFeatured && currentFeaturedCount >= 6) {
+            triggerToast('Maximum of 6 institutions can be Featured.');
+            return inst;
+          }
+          return { ...inst, isFeatured: !inst.isFeatured };
+        }
+        return inst;
+      });
+    });
+    if (institutions.find(i => i.id === id)?.isFeatured) {
+      triggerToast('Institution removed from Featured section.');
+    } else {
+      triggerToast('Institution added to Featured section.');
+    }
+  };
+
   const handleDeleteInst = (id: string) => {
     setInstitutions(prev => prev.filter(i => i.id !== id));
     triggerToast('Institution portal removed permanently.');
@@ -192,7 +235,10 @@ export default function AdminPanel({
     } else {
       const newUni: Uniform = {
         id: `uni-${Date.now()}`,
-        ...uniForm
+        ...uniForm,
+        institutionId: selectedInstId || uniForm.institutionId,
+        sku: uniForm.sku || `SKU-${Date.now().toString().slice(-6)}`,
+        fabricType: uniForm.fabricType || 'Standard Blend'
       };
       setUniforms(prev => [...prev, newUni]);
       triggerToast('New official uniform SKU integrated.');
@@ -239,14 +285,22 @@ export default function AdminPanel({
     e.preventDefault();
     if (!newCatName) return;
     const slug = newCatName.toLowerCase().replace(/\s+/g, '-');
-    const newCat: UniformCategory = {
-      id: `cat-${Date.now()}`,
-      name: newCatName,
-      slug
-    };
-    setCategories(prev => [...prev, newCat]);
-    setNewCatName('');
-    triggerToast('New categorical class added.');
+
+    if (editingId) {
+      setCategories(prev => prev.map(c => c.id === editingId ? { ...c, name: newCatName, slug } : c));
+      setEditingId(null);
+      setNewCatName('');
+      triggerToast('Category updated.');
+    } else {
+      const newCat: UniformCategory = {
+        id: `cat-${Date.now()}`,
+        name: newCatName,
+        slug
+      };
+      setCategories(prev => [...prev, newCat]);
+      setNewCatName('');
+      triggerToast('New categorical class added.');
+    }
   };
 
   const handleDeleteCategory = (id: string) => {
@@ -352,10 +406,10 @@ export default function AdminPanel({
       isVerified: true, isSuspended: false
     });
     setUniForm({
-      institutionId: 'inst-1', name: '', sku: '', categoryId: 'cat-1', gender: 'boys',
+      institutionId: selectedInstId || 'inst-1', name: '', sku: '', categoryId: categories[0]?.id || 'cat-1', gender: 'boys',
       description: '', fabricType: '', price: 1200, discountPrice: undefined,
       availableSizes: ['S', 'M', 'L'], stockQuantity: 100, isArchived: false,
-      images: { main: 'https://images.unsplash.com/photo-1594744803329-e58b31de215f?auto=format&fit=crop&q=80&w=600', gallery: [] }
+      images: { main: 'https://images.unsplash.com/photo-1594744803329-e58b31de215f?auto=format&fit=crop&q=80&w=600', front: '', back: '', side: '', gallery: [] }
     });
     setNoticeForm({
       institutionId: 'inst-1', title: '', description: '', attachment: '',
@@ -429,83 +483,42 @@ export default function AdminPanel({
         <div className="flex items-center overflow-x-auto gap-2 border-b border-neutral-200 dark:border-neutral-900 pb-2 scrollbar-none">
           <button
             onClick={() => { setActiveAdminTab('dashboard'); resetFormState(); }}
-            className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${
-              activeAdminTab === 'dashboard' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-            }`}
+            className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${activeAdminTab === 'dashboard' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
+              }`}
           >
             <BarChart3 className="w-4 h-4" /> Overview Dashboard
           </button>
           {currentRole === 'super_admin' && (
             <button
               onClick={() => { setActiveAdminTab('slides'); resetFormState(); }}
-              className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${
-                activeAdminTab === 'slides' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-              }`}
+              className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${activeAdminTab === 'slides' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
+                }`}
             >
               <Sliders className="w-4 h-4" /> Slider Manager
             </button>
           )}
           {currentRole === 'super_admin' && (
             <button
-              onClick={() => { setActiveAdminTab('institutions'); resetFormState(); }}
-              className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${
-                activeAdminTab === 'institutions' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-              }`}
+              onClick={() => { setActiveAdminTab('institutions'); resetFormState(); setSelectedInstId(null); }}
+              className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${activeAdminTab === 'institutions' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
+                }`}
             >
               <School className="w-4 h-4" /> Institutions Portal Port
             </button>
           )}
           <button
-            onClick={() => { setActiveAdminTab('uniforms'); resetFormState(); }}
-            className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${
-              activeAdminTab === 'uniforms' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-            }`}
-          >
-            <ShoppingBag className="w-4 h-4" /> Uniform Catalogues
-          </button>
-          <button
             onClick={() => { setActiveAdminTab('categories'); resetFormState(); }}
-            className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${
-              activeAdminTab === 'categories' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-            }`}
+            className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${activeAdminTab === 'categories' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
+              }`}
           >
             <BookOpen className="w-4 h-4" /> SKU Category Schema
           </button>
-          <button
-            onClick={() => { setActiveAdminTab('notices'); resetFormState(); }}
-            className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${
-              activeAdminTab === 'notices' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-            }`}
-          >
-            <ClipboardList className="w-4 h-4" /> Campus Notice Boards
-          </button>
-          <button
-            onClick={() => { setActiveAdminTab('gallery'); resetFormState(); }}
-            className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${
-              activeAdminTab === 'gallery' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-            }`}
-          >
-            <ImageIcon className="w-4 h-4" /> Bulk Photo Gallery
-          </button>
-          <button
-            onClick={() => { setActiveAdminTab('contacts'); resetFormState(); }}
-            className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 relative ${
-              activeAdminTab === 'contacts' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-            }`}
-          >
-            <Mail className="w-4 h-4" /> Partner Inquiries
-            {contacts.filter(c => !c.isRead).length > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 border-2 border-white rounded-full text-[9px] font-mono text-white flex items-center justify-center font-bold">
-                {contacts.filter(c => !c.isRead).length}
-              </span>
-            )}
-          </button>
+
           {currentRole === 'super_admin' && (
             <button
               onClick={() => { setActiveAdminTab('settings'); resetFormState(); }}
-              className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${
-                activeAdminTab === 'settings' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
-              }`}
+              className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 ${activeAdminTab === 'settings' ? 'bg-black text-white dark:bg-white dark:text-black' : 'hover:bg-neutral-100 text-neutral-500'
+                }`}
             >
               <Settings className="w-4 h-4" /> Tenant Config
             </button>
@@ -516,7 +529,7 @@ export default function AdminPanel({
         {/* PANEL VIEWPORTS */}
         {/* ---------------------------------------------------- */}
         <div className="mt-8">
-          
+
           {/* TAB 1: OVERVIEW DASHBOARD */}
           {activeAdminTab === 'dashboard' && (
             <div className="space-y-8 animate-fadeIn">
@@ -544,27 +557,7 @@ export default function AdminPanel({
                   </span>
                 </div>
 
-                {/* Widgets 3 */}
-                <div className="p-6 bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl">
-                  <span className="block text-[10px] font-mono uppercase tracking-wider text-neutral-400">Contact Proposals</span>
-                  <span className="block text-3xl font-extrabold font-sans tracking-tight text-neutral-900 dark:text-white mt-1">
-                    {contacts.length}
-                  </span>
-                  <span className="block text-[10px] font-mono text-amber-500 mt-3 leading-none block">
-                    {contacts.filter(c => !c.isRead).length} Pending Process
-                  </span>
-                </div>
 
-                {/* Widgets 4 */}
-                <div className="p-6 bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl">
-                  <span className="block text-[10px] font-mono uppercase tracking-wider text-neutral-400">Active Notice Logs</span>
-                  <span className="block text-3xl font-extrabold font-sans tracking-tight text-neutral-900 dark:text-white mt-1">
-                    {notices.length}
-                  </span>
-                  <span className="block text-[10px] font-mono text-neutral-400 mt-3 leading-none block">
-                    System Broadcasters
-                  </span>
-                </div>
 
                 {/* Widgets 5 */}
                 <div className="p-6 bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl">
@@ -630,7 +623,7 @@ export default function AdminPanel({
               {showAddForm && (
                 <form onSubmit={handleCreateOrEditSlide} className="p-6 bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl space-y-4">
                   <h4 className="text-sm font-bold uppercase tracking-wider">{editingId ? 'Edit Hero Slide' : 'Create New Hero Slide (Up to 10 Slides supported)'}</h4>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase font-mono text-neutral-400">Slide Main Title *</label>
@@ -748,11 +741,10 @@ export default function AdminPanel({
                         <td className="p-4">
                           <button
                             onClick={() => handleToggleSlideActive(slide.id)}
-                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold border transition-colors ${
-                              slide.isActive
+                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold border transition-colors ${slide.isActive
                                 ? 'bg-green-500/10 text-green-500 border-green-500/10'
                                 : 'bg-neutral-100 text-neutral-400 border-neutral-200'
-                            }`}
+                              }`}
                           >
                             {slide.isActive ? 'Active' : 'Paused'}
                           </button>
@@ -782,7 +774,7 @@ export default function AdminPanel({
           )}
 
           {/* TAB 3: INSTITUTIONS MANAGEMENT */}
-          {activeAdminTab === 'institutions' && (
+          {activeAdminTab === 'institutions' && !selectedInstId && (
             <div className="space-y-6 animate-fadeIn">
               <div className="flex items-center justify-between gap-4">
                 <h3 className="text-lg font-bold font-sans">Verified Institutions Stack</h3>
@@ -800,7 +792,7 @@ export default function AdminPanel({
               {showAddForm && (
                 <form onSubmit={handleCreateOrEditInst} className="p-6 bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl space-y-4">
                   <h4 className="text-sm font-bold uppercase tracking-wider">{editingId ? 'Edit Institution Metadata' : 'Enlist New Verified Institution'}</h4>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase font-mono text-neutral-400">Institution Registered Name *</label>
@@ -970,45 +962,70 @@ export default function AdminPanel({
                       <th className="p-4">Logo</th>
                       <th className="p-4">Name & Address</th>
                       <th className="p-4">Verification</th>
+                      <th className="p-4">Banner</th>
+                      <th className="p-4">Featured</th>
                       <th className="p-4">Suspended</th>
                       <th className="p-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-150 dark:divide-neutral-900">
                     {institutions.map(inst => (
-                      <tr key={inst.id} className="hover:bg-neutral-50/50">
-                        <td className="p-4">
-                          <img src={inst.logo} className="w-10 h-10 object-cover rounded-lg border border-neutral-100" />
+                      <tr key={inst.id} className="hover:bg-neutral-50/50 cursor-pointer" onClick={() => { setSelectedInstId(inst.id); resetFormState(); }}>
+                        <td className="p-4 flex items-center gap-3">
+                          <img src={inst.logo} className="w-10 h-10 object-cover rounded-lg border bg-white" />
+                          <div>
+                            <span className="font-bold text-neutral-800 dark:text-neutral-100">{inst.name}</span>
+                            <span className="block text-[9px] uppercase font-mono text-neutral-400 mt-0.5">{inst.slug}</span>
+                          </div>
                         </td>
-                        <td className="p-4">
-                          <div className="font-bold text-neutral-800 dark:text-neutral-100">{inst.name}</div>
-                          <div className="text-[10px] font-mono text-neutral-400 mt-0.5">{inst.city}, {inst.state}</div>
+                        <td className="p-4 font-sans text-neutral-700 dark:text-neutral-300">
+                          {inst.city}, {inst.state}
                         </td>
                         <td className="p-4">
                           <button
-                            onClick={() => handleVerifyToggleInst(inst.id)}
-                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold border transition-colors ${
-                              inst.isVerified
+                            onClick={(e) => { e.stopPropagation(); handleVerifyToggleInst(inst.id); }}
+                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold border transition-colors ${inst.isVerified
                                 ? 'bg-green-500/10 text-green-500 border-green-500/10'
-                                : 'bg-red-500/10 text-red-500 border-red-500/10'
-                            }`}
+                                : 'bg-neutral-100 text-neutral-400 border-neutral-200'
+                              }`}
                           >
                             {inst.isVerified ? 'Verified' : 'Unverified'}
                           </button>
                         </td>
                         <td className="p-4">
                           <button
-                            onClick={() => handleSuspendToggleInst(inst.id)}
-                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold border transition-colors ${
-                              inst.isSuspended
+                            onClick={(e) => { e.stopPropagation(); handleTrustedToggleInst(inst.id); }}
+                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold border transition-colors ${inst.isTrusted
+                                ? 'bg-blue-500/10 text-blue-500 border-blue-500/10'
+                                : 'bg-neutral-100 text-neutral-400 border-neutral-200'
+                              }`}
+                          >
+                            {inst.isTrusted ? 'Trusted' : 'Hidden'}
+                          </button>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleFeaturedToggleInst(inst.id); }}
+                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold border transition-colors ${inst.isFeatured
+                                ? 'bg-purple-500/10 text-purple-500 border-purple-500/10'
+                                : 'bg-neutral-100 text-neutral-400 border-neutral-200'
+                              }`}
+                          >
+                            {inst.isFeatured ? 'Featured' : 'Hidden'}
+                          </button>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleSuspendToggleInst(inst.id); }}
+                            className={`px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold border transition-colors ${inst.isSuspended
                                 ? 'bg-amber-500/15 text-amber-500 border-amber-500/15'
                                 : 'bg-neutral-100 text-neutral-400 border-neutral-200'
-                            }`}
+                              }`}
                           >
                             {inst.isSuspended ? 'Suspended' : 'Active'}
                           </button>
                         </td>
-                        <td className="p-4 text-right space-x-2">
+                        <td className="p-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleEditTrigger('inst', inst)}
                             className="p-1.5 hover:bg-neutral-100 rounded text-neutral-600 dark:text-neutral-300"
@@ -1032,11 +1049,21 @@ export default function AdminPanel({
             </div>
           )}
 
-          {/* TAB 4: UNIFORM SKU CATALOGUE */}
-          {activeAdminTab === 'uniforms' && (
+          {/* TAB 4: UNIFORM SKU CATALOGUE (Now nested under Institutions) */}
+          {activeAdminTab === 'institutions' && selectedInstId && (
             <div className="space-y-6 animate-fadeIn">
+              <div className="flex items-center gap-4 mb-2">
+                <button
+                  onClick={() => { setSelectedInstId(null); resetFormState(); }}
+                  className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-900 rounded-lg text-xs font-bold font-sans transition-colors flex items-center gap-1 text-neutral-600 dark:text-neutral-300"
+                >
+                  <ChevronRight className="w-3.5 h-3.5 rotate-180" /> Back to Institutions List
+                </button>
+              </div>
               <div className="flex items-center justify-between gap-4">
-                <h3 className="text-lg font-bold font-sans">Official Uniform Garment Stack</h3>
+                <h3 className="text-lg font-bold font-sans">
+                  {institutions.find(i => i.id === selectedInstId)?.name} - Uniform Catalog
+                </h3>
                 {!showAddForm && (
                   <button
                     onClick={() => { setShowAddForm(true); setEditingId(null); }}
@@ -1052,20 +1079,7 @@ export default function AdminPanel({
                 <form onSubmit={handleCreateOrEditUniform} className="p-6 bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl space-y-4">
                   <h4 className="text-sm font-bold uppercase tracking-wider">{editingId ? 'Edit Uniform Details' : 'Integrate New Uniform SKU'}</h4>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Assigned Institution Portal *</label>
-                      <select
-                        value={uniForm.institutionId}
-                        onChange={(e) => setUniForm({ ...uniForm, institutionId: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs"
-                      >
-                        {institutions.map(inst => (
-                          <option key={inst.id} value={inst.id}>{inst.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase font-mono text-neutral-400">Garment Name *</label>
                       <input
@@ -1077,21 +1091,9 @@ export default function AdminPanel({
                         className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs"
                       />
                     </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">SKU Code (Unique) *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. BC-SHI-01"
-                        value={uniForm.sku}
-                        onChange={(e) => setUniForm({ ...uniForm, sku: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs font-mono"
-                      />
-                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase font-mono text-neutral-400">Garment Category *</label>
                       <select
@@ -1116,18 +1118,6 @@ export default function AdminPanel({
                         <option value="girls">Girls</option>
                         <option value="unisex">Unisex</option>
                       </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Fabric Thread Type *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. 100% Egyptian combed cotton"
-                        value={uniForm.fabricType}
-                        onChange={(e) => setUniForm({ ...uniForm, fabricType: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs"
-                      />
                     </div>
                   </div>
 
@@ -1282,14 +1272,13 @@ export default function AdminPanel({
                     <tr className="bg-neutral-50 dark:bg-neutral-900/60 font-mono uppercase text-neutral-400 border-b border-neutral-150 dark:border-neutral-900">
                       <th className="p-4">SKU Code</th>
                       <th className="p-4">Uniform Profile</th>
-                      <th className="p-4">Assigned Institution</th>
                       <th className="p-4">Pricing</th>
                       <th className="p-4">Stock level</th>
                       <th className="p-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-150 dark:divide-neutral-900">
-                    {uniforms.map(uni => (
+                    {uniforms.filter(u => u.institutionId === selectedInstId).map(uni => (
                       <tr key={uni.id} className="hover:bg-neutral-50/50">
                         <td className="p-4 font-mono font-bold">{uni.sku}</td>
                         <td className="p-4 flex items-center gap-3">
@@ -1298,9 +1287,6 @@ export default function AdminPanel({
                             <span className="font-bold text-neutral-800 dark:text-neutral-100">{uni.name}</span>
                             <span className="block text-[9px] uppercase font-mono text-neutral-400 mt-0.5">{uni.gender}</span>
                           </div>
-                        </td>
-                        <td className="p-4 font-sans text-neutral-700 dark:text-neutral-300">
-                          {institutions.find(i => i.id === uni.institutionId)?.name || 'General Inventory'}
                         </td>
                         <td className="p-4 font-mono font-bold text-neutral-800 dark:text-neutral-200">
                           {uni.discountPrice ? (
@@ -1354,7 +1340,7 @@ export default function AdminPanel({
           {activeAdminTab === 'categories' && (
             <div className="space-y-6 animate-fadeIn max-w-2xl mx-auto">
               <h3 className="text-lg font-bold font-sans">SaaS Custom Categories Editor</h3>
-              
+
               <form onSubmit={handleAddCategory} className="flex gap-4 p-4 bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl items-end">
                 <div className="flex-1 space-y-1">
                   <label className="text-[10px] uppercase font-mono text-neutral-400">New Category Title *</label>
@@ -1371,7 +1357,7 @@ export default function AdminPanel({
                   type="submit"
                   className="px-5 py-2.5 bg-black text-white dark:bg-white dark:text-black rounded-lg text-xs font-bold leading-none shrink-0"
                 >
-                  Create Class
+                  {editingId ? 'Save Changes' : 'Create Class'}
                 </button>
               </form>
 
@@ -1385,19 +1371,27 @@ export default function AdminPanel({
                         <span className="text-xs font-sans font-bold text-neutral-800 dark:text-neutral-100">{cat.name}</span>
                         <span className="block text-[9px] font-mono text-neutral-450 mt-1 uppercase">Slug Ref: {cat.slug}</span>
                       </div>
-                      
-                      {/* Delete button only for non-default */}
-                      {index >= 7 ? (
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingId(cat.id);
+                            setNewCatName(cat.name);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 rounded transition-colors"
+                          title="Edit class"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           onClick={() => handleDeleteCategory(cat.id)}
-                          className="p-1 hover:bg-red-500/10 text-red-500 rounded"
+                          className="p-1 hover:bg-red-500/10 text-red-500 rounded transition-colors"
                           title="Delete class"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                      ) : (
-                        <span className="text-[8px] font-mono uppercase bg-neutral-100 dark:bg-neutral-900 text-neutral-450 px-2 py-0.5 rounded-md font-bold">Default System class</span>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1546,98 +1540,6 @@ export default function AdminPanel({
             </div>
           )}
 
-          {/* TAB 7: GALLERIES BULK MANAGER */}
-          {activeAdminTab === 'gallery' && (
-            <div className="space-y-8 animate-fadeIn">
-              <div className="p-6 bg-white dark:bg-neutral-950 border border-neutral-154 dark:border-neutral-900 rounded-3xl space-y-4">
-                <div className="space-y-1">
-                  <h4 className="text-base font-extrabold font-sans">Simulated Bulk Gallery Uploader</h4>
-                  <p className="text-xs text-neutral-400">Publish high resolution Unsplash graphics or physical snapshots to campus databases.</p>
-                </div>
-
-                <form onSubmit={handleBulkUploadGallery} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Target Institution *</label>
-                      <select
-                        value={galleryInstId}
-                        onChange={(e) => setGalleryInstId(e.target.value)}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs"
-                      >
-                        {institutions.map(inst => (
-                          <option key={inst.id} value={inst.id}>{inst.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Photo Theme Title *</label>
-                      <input
-                        type="text"
-                        required
-                        value={galleryTitle}
-                        onChange={(e) => setGalleryTitle(e.target.value)}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Gallery Slot category *</label>
-                      <select
-                        value={galleryCategory}
-                        onChange={(e) => setGalleryCategory(e.target.value as any)}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs"
-                      >
-                        <option value="campus">Campus view</option>
-                        <option value="event">Campus event</option>
-                        <option value="institution">Institutional representative</option>
-                        <option value="uniform">Uniform displays</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-mono text-neutral-400">Bulk Web Image URLs (comma separated) *</label>
-                    <textarea
-                      rows={3}
-                      required
-                      placeholder="e.g. https://images.unsplash.com/photo-1523050854058-8df90110c9f1, https://images.unsplash.com/photo-1541339907198-e08756dedf3f..."
-                      value={bulkGalleryUrls}
-                      onChange={(e) => setBulkGalleryUrls(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-neutral-50 dark:bg-black border rounded-lg text-xs font-mono resize-none"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="px-6 py-3 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black rounded-xl text-xs font-bold uppercase tracking-widest leading-none flex items-center gap-1"
-                  >
-                    Bulk Upload photos
-                  </button>
-                </form>
-              </div>
-
-              {/* Photos deck list */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-6">
-                {galleryItems.map(g => (
-                  <div key={g.id} className="relative group rounded-xl overflow-hidden aspect-square border border-neutral-150 dark:border-neutral-900 bg-white">
-                    <img src={g.image} className="w-full h-full object-cover" />
-                    
-                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[9px] font-mono text-neutral-300 truncate">{g.title}</span>
-                      <button
-                        onClick={() => handleDeleteGalleryItem(g.id)}
-                        className="p-1 bg-red-600 rounded text-white"
-                        title="Delete image"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* TAB 8: CONTACT SUBMISSIONS */}
           {activeAdminTab === 'contacts' && (
@@ -1654,9 +1556,8 @@ export default function AdminPanel({
                   contacts.map(c => (
                     <div
                       key={c.id}
-                      className={`p-6 border rounded-2xl space-y-4 transition-all bg-white dark:bg-neutral-950 ${
-                        c.isRead ? 'border-neutral-200 dark:border-neutral-900 opacity-70' : 'border-red-400'
-                      }`}
+                      className={`p-6 border rounded-2xl space-y-4 transition-all bg-white dark:bg-neutral-950 ${c.isRead ? 'border-neutral-200 dark:border-neutral-900 opacity-70' : 'border-red-400'
+                        }`}
                     >
                       <div className="flex items-start justify-between border-b pb-3">
                         <div>
@@ -1783,7 +1684,7 @@ export default function AdminPanel({
               {/* SEO parameters */}
               <div className="p-4 bg-neutral-50 dark:bg-black/30 border border-neutral-150 dark:border-neutral-900 rounded-xl space-y-4 pt-4 border-t">
                 <span className="block text-[10px] uppercase font-mono text-neutral-400 mb-2">Metadata SEO configs & Search Indexing</span>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1">
                     <label className="text-[10px] uppercase font-mono text-neutral-400">Meta Title Header</label>

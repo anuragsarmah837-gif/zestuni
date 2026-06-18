@@ -2,14 +2,13 @@
  * Types and interfaces for Zestwear Uniforms platform.
  */
 
-export type UserRole = 'guest' | 'institution_admin' | 'super_admin';
+export type UserRole = 'guest' | 'super_admin';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
-  institutionId?: string; // If institution admin
 }
 
 export interface HeroSlide {
@@ -42,6 +41,8 @@ export interface Institution {
   vision: string;
   isVerified: boolean;
   isSuspended: boolean;
+  isTrusted?: boolean;
+  isFeatured?: boolean;
 }
 
 export interface UniformCategory {

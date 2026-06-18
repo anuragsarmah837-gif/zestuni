@@ -200,6 +200,7 @@ export default function App() {
         setSelectedInstitutionSlug={setSelectedInstitutionSlug}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        settings={settings}
       />
 
       {/* Admin Panel Quick Back Floating Action Bar */}

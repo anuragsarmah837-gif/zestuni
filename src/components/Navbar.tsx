@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, Shield, Search, UserCheck, ChevronDown, Sparkles, PhoneCall } from 'lucide-react';
-import { UserRole } from '../types';
+import { UserRole, WebsiteSettings } from '../types';
 
 interface NavbarProps {
   activeView: string;
@@ -10,6 +10,7 @@ interface NavbarProps {
   setSelectedInstitutionSlug: (slug: string | null) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  settings: WebsiteSettings;
 }
 
 export default function Navbar({
@@ -19,7 +20,8 @@ export default function Navbar({
   setCurrentRole,
   setSelectedInstitutionSlug,
   searchQuery,
-  setSearchQuery
+  setSearchQuery,
+  settings
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -43,7 +45,7 @@ export default function Navbar({
   const selectRole = (role: UserRole) => {
     setCurrentRole(role);
     setIsRoleDropdownOpen(false);
-    if (role === 'super_admin' || role === 'institution_admin') {
+    if (role === 'super_admin') {
       setActiveView('admin');
     } else {
       setActiveView('home');
@@ -68,14 +70,14 @@ export default function Navbar({
             onClick={() => handleNavClick('home')}
           >
             <div className="w-10 h-10 bg-black dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center font-bold text-lg tracking-wider transition-transform duration-300 group-hover:scale-105 shadow-md">
-              ZW
+              {settings.logoText.substring(0, 2).toUpperCase()}
             </div>
             <div className="hidden sm:block">
               <span className="font-sans font-bold text-lg tracking-wider text-neutral-900 dark:text-white block leading-none">
-                ZESTWEAR
+                {settings.logoText}
               </span>
               <span className="text-[10px] font-mono tracking-[0.3em] text-neutral-400 block mt-0.5 uppercase">
-                UNIFORMS
+                {settings.logoSubText}
               </span>
             </div>
           </div>
@@ -187,20 +189,7 @@ export default function Navbar({
                     <span>Guest Student View</span>
                     {currentRole === 'guest' && <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />}
                   </button>
-                  <button
-                    onClick={() => selectRole('institution_admin')}
-                    className={`w-full text-left px-3 py-2 text-xs rounded-lg flex items-center justify-between transition-colors ${
-                      currentRole === 'institution_admin'
-                        ? 'bg-neutral-50 dark:bg-neutral-900 font-semibold text-black dark:text-white'
-                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <Shield className="w-3 h-3 text-amber-500" />
-                      Inst. Admin (Jorhat)
-                    </span>
-                    {currentRole === 'institution_admin' && <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />}
-                  </button>
+
                   <button
                     onClick={() => selectRole('super_admin')}
                     className={`w-full text-left px-3 py-2 text-xs rounded-lg flex items-center justify-between transition-colors ${
