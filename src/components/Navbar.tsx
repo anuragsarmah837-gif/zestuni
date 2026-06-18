@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Shield, Search, UserCheck, ChevronDown, Sparkles, PhoneCall } from 'lucide-react';
+import { Menu, X, Shield, Search, UserCheck, ChevronDown, Sparkles, PhoneCall, LayoutDashboard } from 'lucide-react';
 import { UserRole, WebsiteSettings } from '../types';
+import { SignInButton, UserButton, useUser } from '@clerk/clerk-react';
 
 interface NavbarProps {
   activeView: string;
   setActiveView: (view: string) => void;
-  currentRole: UserRole;
-  setCurrentRole: (role: UserRole) => void;
   setSelectedInstitutionSlug: (slug: string | null) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -16,8 +15,6 @@ interface NavbarProps {
 export default function Navbar({
   activeView,
   setActiveView,
-  currentRole,
-  setCurrentRole,
   setSelectedInstitutionSlug,
   searchQuery,
   setSearchQuery,
@@ -25,8 +22,8 @@ export default function Navbar({
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,16 +37,6 @@ export default function Navbar({
     setActiveView(view);
     setSelectedInstitutionSlug(null);
     setIsMobileMenuOpen(false);
-  };
-
-  const selectRole = (role: UserRole) => {
-    setCurrentRole(role);
-    setIsRoleDropdownOpen(false);
-    if (role === 'super_admin') {
-      setActiveView('admin');
-    } else {
-      setActiveView('home');
-    }
   };
 
   return (
@@ -69,9 +56,13 @@ export default function Navbar({
             className="flex items-center gap-2 cursor-pointer group"
             onClick={() => handleNavClick('home')}
           >
-            <div className="w-10 h-10 bg-black dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center font-bold text-lg tracking-wider transition-transform duration-300 group-hover:scale-105 shadow-md">
-              {settings.logoText.substring(0, 2).toUpperCase()}
-            </div>
+            {settings.logoImage ? (
+              <img src={settings.logoImage} alt="Logo" className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105" />
+            ) : (
+              <div className="w-10 h-10 bg-black dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center font-bold text-lg tracking-wider transition-transform duration-300 group-hover:scale-105 shadow-md">
+                {settings.logoText.substring(0, 2).toUpperCase()}
+              </div>
+            )}
             <div className="hidden sm:block">
               <span className="font-sans font-bold text-lg tracking-wider text-neutral-900 dark:text-white block leading-none">
                 {settings.logoText}
@@ -160,62 +151,36 @@ export default function Navbar({
               </button>
             </div>
 
-            {/* Quick Role Simulation Switcher / Login simulation */}
-            <div className="relative">
-              <button
-                onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-mono font-medium border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 transition-all shadow-xs"
-              >
-                <UserCheck className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline capitalize">
-                  {currentRole.replace('_', ' ')}
-                </span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {isRoleDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-lg z-50 p-1">
-                  <div className="px-3 py-2 text-[10px] font-mono text-neutral-400 capitalize border-b border-neutral-100 dark:border-neutral-900">
-                    SaaS Portal Mock Auth
-                  </div>
+            {/* Authentication & Admin Actions */}
+            <div className="flex items-center gap-3">
+              {!isSignedIn ? (
+                <div className="text-sm font-medium tracking-tight bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">
+                  <SignInButton mode="modal" />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
                   <button
-                    onClick={() => selectRole('guest')}
-                    className={`w-full text-left px-3 py-2 text-xs rounded-lg flex items-center justify-between transition-colors ${
-                      currentRole === 'guest'
-                        ? 'bg-neutral-50 dark:bg-neutral-900 font-semibold text-black dark:text-white'
-                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900'
-                    }`}
+                    onClick={() => handleNavClick('admin')}
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-mono font-medium border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 transition-all shadow-xs"
                   >
-                    <span>Guest Student View</span>
-                    {currentRole === 'guest' && <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />}
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    <span className="hidden lg:inline">Admin</span>
                   </button>
-
-                  <button
-                    onClick={() => selectRole('super_admin')}
-                    className={`w-full text-left px-3 py-2 text-xs rounded-lg flex items-center justify-between transition-colors ${
-                      currentRole === 'super_admin'
-                        ? 'bg-neutral-50 dark:bg-neutral-900 font-semibold text-black dark:text-white'
-                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-900'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <Shield className="w-3 h-3 text-red-500" />
-                      Super Admin (Full)
-                    </span>
-                    {currentRole === 'super_admin' && <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />}
-                  </button>
+                  <UserButton afterSignOutUrl="/" />
                 </div>
               )}
             </div>
 
             {/* Partner Button */}
-            <button
-              onClick={() => handleNavClick('contact')}
-              className="hidden lg:flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black rounded-lg text-sm font-semibold tracking-tight transition-all duration-300 shadow-sm"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Partner With Us
-            </button>
+            {!isSignedIn && (
+              <button
+                onClick={() => handleNavClick('contact')}
+                className="hidden lg:flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black rounded-lg text-sm font-semibold tracking-tight transition-all duration-300 shadow-sm"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Partner With Us
+              </button>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -280,12 +245,7 @@ export default function Navbar({
             Contact
           </button>
 
-          <div className="pt-4 border-t border-neutral-100 dark:border-neutral-900 flex justify-between items-center px-4">
-            <span className="text-xs font-mono text-neutral-400">Current Simulation:</span>
-            <span className="text-xs font-bold capitalize text-neutral-800 dark:text-neutral-200">
-              {currentRole.replace('_', ' ')}
-            </span>
-          </div>
+
         </div>
       )}
     </nav>

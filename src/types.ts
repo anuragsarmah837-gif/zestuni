@@ -102,6 +102,7 @@ export interface ContactSubmission {
 }
 
 export interface WebsiteSettings {
+  logoImage?: string;
   logoText: string;
   logoSubText: string;
   favicon: string;

@@ -8,6 +8,7 @@ import {
   UserRole, HeroSlide, Institution, Uniform, UniformCategory,
   InstitutionNotice, GalleryItem, ContactSubmission, WebsiteSettings
 } from '../types';
+import CloudinaryUpload from './CloudinaryUpload';
 
 interface AdminPanelProps {
   currentRole: UserRole;
@@ -542,7 +543,7 @@ export default function AdminPanel({
                     {institutions.length}
                   </span>
                   <div className="mt-3 text-[10px] font-mono text-green-500 flex items-center gap-1 leading-none">
-                    <ArrowUp className="w-3 h-3" /> +14.2% MoM
+                    <CheckCircle2 className="w-3 h-3" /> {institutions.filter(i => i.isVerified).length} Verified
                   </div>
                 </div>
 
@@ -572,35 +573,45 @@ export default function AdminPanel({
               </div>
 
               {/* Graphic SVG Plot Trends */}
-              <div className="bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl p-6">
-                <div className="flex items-center justify-between gap-4 mb-6">
-                  <div>
-                    <h4 className="text-base font-extrabold uppercase font-sans text-neutral-900 dark:text-white">Institution Expansion Graph</h4>
-                    <p className="text-xs text-neutral-400">Monthly enrolled active portals / unified schools</p>
-                  </div>
-                  <div className="px-3 py-1.5 bg-neutral-50 rounded-lg text-xs font-mono font-bold">MoM Growth Trends</div>
-                </div>
+              {(() => {
+                const graphData = institutions.map(inst => ({
+                  name: inst.slug || inst.name.substring(0, 8),
+                  count: uniforms.filter(u => u.institutionId === inst.id).length
+                })).sort((a, b) => b.count - a.count).slice(0, 5);
+                const maxCount = Math.max(...graphData.map(d => d.count), 1);
 
-                {/* Simple compliant bar graph */}
-                <div className="h-60 flex items-end justify-between gap-4 pt-4 border-b border-neutral-100 dark:border-neutral-900">
-                  <div className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                    <div className="w-full bg-neutral-100 group-hover:bg-neutral-800 transition-all rounded-t-lg" style={{ height: '24%' }} />
-                    <span className="text-[10px] font-mono text-neutral-400">Jan</span>
+                return (
+                  <div className="bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-2xl p-6">
+                    <div className="flex items-center justify-between gap-4 mb-6">
+                      <div>
+                        <h4 className="text-base font-extrabold uppercase font-sans text-neutral-900 dark:text-white">Institution Expansion Graph</h4>
+                        <p className="text-xs text-neutral-400">Top portals by SKU uniform count</p>
+                      </div>
+                      <div className="px-3 py-1.5 bg-neutral-50 dark:bg-neutral-900 rounded-lg text-xs font-mono font-bold">Dynamic Trends</div>
+                    </div>
+
+                    {/* Simple compliant bar graph */}
+                    <div className="h-60 flex items-end justify-between gap-4 pt-4 border-b border-neutral-100 dark:border-neutral-900">
+                      {graphData.length === 0 ? (
+                        <div className="w-full text-center text-neutral-400 text-xs pb-4">No data available</div>
+                      ) : (
+                        graphData.map((data, idx) => (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
+                            <span className="text-[10px] font-mono text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity">{data.count}</span>
+                            <div 
+                              className={`w-full transition-all rounded-t-lg ${idx === 0 ? 'bg-black dark:bg-white' : 'bg-neutral-100 dark:bg-neutral-800 group-hover:bg-neutral-800 dark:group-hover:bg-neutral-700'}`} 
+                              style={{ height: `${(data.count / maxCount) * 80 + 5}%` }} 
+                            />
+                            <span className={`text-[10px] font-mono truncate w-full text-center ${idx === 0 ? 'text-neutral-900 dark:text-white font-bold' : 'text-neutral-400'}`}>
+                              {data.name}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                  <div className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                    <div className="w-full bg-neutral-100 group-hover:bg-neutral-800 transition-all rounded-t-lg" style={{ height: '38%' }} />
-                    <span className="text-[10px] font-mono text-neutral-400">Feb</span>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                    <div className="w-full bg-neutral-100 group-hover:bg-neutral-800 transition-all rounded-t-lg" style={{ height: '50%' }} />
-                    <span className="text-[10px] font-mono text-neutral-400">Mar</span>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                    <div className="w-full bg-black dark:bg-white rounded-t-lg-sm transition-all" style={{ height: '82%' }} />
-                    <span className="text-[10px] font-mono text-neutral-900 dark:text-white font-bold">Apr</span>
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
           )}
 
@@ -647,13 +658,10 @@ export default function AdminPanel({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-mono text-neutral-400">Background Image URL *</label>
-                    <input
-                      type="url"
-                      required
-                      value={slideForm.image}
-                      onChange={(e) => setSlideForm({ ...slideForm, image: e.target.value })}
-                      className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs font-mono"
+                    <CloudinaryUpload 
+                      label="Background Image URL *"
+                      defaultPreview={slideForm.image}
+                      onUploadSuccess={(url) => setSlideForm({ ...slideForm, image: url })}
                     />
                   </div>
 
@@ -820,23 +828,17 @@ export default function AdminPanel({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Logo URL *</label>
-                      <input
-                        type="url"
-                        required
-                        value={instForm.logo}
-                        onChange={(e) => setInstForm({ ...instForm, logo: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs font-mono"
+                      <CloudinaryUpload 
+                        label="Logo URL *"
+                        defaultPreview={instForm.logo}
+                        onUploadSuccess={(url) => setInstForm({ ...instForm, logo: url })}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Banner URL *</label>
-                      <input
-                        type="url"
-                        required
-                        value={instForm.banner}
-                        onChange={(e) => setInstForm({ ...instForm, banner: e.target.value })}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs font-mono"
+                      <CloudinaryUpload 
+                        label="Banner URL *"
+                        defaultPreview={instForm.banner}
+                        onUploadSuccess={(url) => setInstForm({ ...instForm, banner: url })}
                       />
                     </div>
                   </div>
@@ -1195,43 +1197,34 @@ export default function AdminPanel({
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                       {/* Main */}
                       <div className="space-y-1">
-                        <label className="text-[9px] uppercase font-mono text-neutral-400">Main Display URL *</label>
-                        <input
-                          type="url"
-                          required
-                          value={uniForm.images.main}
-                          onChange={(e) => setUniForm({ ...uniForm, images: { ...uniForm.images, main: e.target.value } })}
-                          className="w-full px-2.5 py-1.5 bg-white dark:bg-black border rounded-lg text-[10px] font-mono"
+                        <CloudinaryUpload 
+                          label="Main Display URL *"
+                          defaultPreview={uniForm.images.main}
+                          onUploadSuccess={(url) => setUniForm({ ...uniForm, images: { ...uniForm.images, main: url } })}
                         />
                       </div>
                       {/* Front */}
                       <div className="space-y-1">
-                        <label className="text-[9px] uppercase font-mono text-neutral-400">Front View URL</label>
-                        <input
-                          type="url"
-                          value={uniForm.images.front || ''}
-                          onChange={(e) => setUniForm({ ...uniForm, images: { ...uniForm.images, front: e.target.value } })}
-                          className="w-full px-2.5 py-1.5 bg-white dark:bg-black border rounded-lg text-[10px] font-mono"
+                        <CloudinaryUpload 
+                          label="Front View URL"
+                          defaultPreview={uniForm.images.front}
+                          onUploadSuccess={(url) => setUniForm({ ...uniForm, images: { ...uniForm.images, front: url } })}
                         />
                       </div>
                       {/* Back */}
                       <div className="space-y-1">
-                        <label className="text-[9px] uppercase font-mono text-neutral-400">Back View URL</label>
-                        <input
-                          type="url"
-                          value={uniForm.images.back || ''}
-                          onChange={(e) => setUniForm({ ...uniForm, images: { ...uniForm.images, back: e.target.value } })}
-                          className="w-full px-2.5 py-1.5 bg-white dark:bg-black border rounded-lg text-[10px] font-mono"
+                        <CloudinaryUpload 
+                          label="Back View URL"
+                          defaultPreview={uniForm.images.back}
+                          onUploadSuccess={(url) => setUniForm({ ...uniForm, images: { ...uniForm.images, back: url } })}
                         />
                       </div>
                       {/* Side */}
                       <div className="space-y-1">
-                        <label className="text-[9px] uppercase font-mono text-neutral-400">Side View URL</label>
-                        <input
-                          type="url"
-                          value={uniForm.images.side || ''}
-                          onChange={(e) => setUniForm({ ...uniForm, images: { ...uniForm.images, side: e.target.value } })}
-                          className="w-full px-2.5 py-1.5 bg-white dark:bg-black border rounded-lg text-[10px] font-mono"
+                        <CloudinaryUpload 
+                          label="Side View URL"
+                          defaultPreview={uniForm.images.side}
+                          onUploadSuccess={(url) => setUniForm({ ...uniForm, images: { ...uniForm.images, side: url } })}
                         />
                       </div>
                     </div>
@@ -1613,7 +1606,14 @@ export default function AdminPanel({
               </div>
 
               {/* Brand coordinates */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="space-y-1">
+                  <CloudinaryUpload 
+                    label="Main Logo Image"
+                    defaultPreview={settings.logoImage}
+                    onUploadSuccess={(url) => setSettings({ ...settings, logoImage: url })}
+                  />
+                </div>
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase font-mono text-neutral-400">Main Logo text</label>
                   <input
@@ -1697,13 +1697,10 @@ export default function AdminPanel({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-mono text-neutral-400">OG Graph Card Image URL</label>
-                    <input
-                      type="url"
-                      required
-                      value={settings.seo.ogImage}
-                      onChange={(e) => setSettings({ ...settings, seo: { ...settings.seo, ogImage: e.target.value } })}
-                      className="w-full px-3 py-1.5 bg-white dark:bg-black border rounded-lg text-xs font-mono"
+                    <CloudinaryUpload 
+                      label="OG Graph Card Image URL"
+                      defaultPreview={settings.seo.ogImage}
+                      onUploadSuccess={(url) => setSettings({ ...settings, seo: { ...settings.seo, ogImage: url } })}
                     />
                   </div>
                 </div>

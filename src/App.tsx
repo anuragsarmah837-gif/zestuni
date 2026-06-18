@@ -3,6 +3,7 @@ import {
   CheckCircle2, MapPin, Globe, Mail, Phone, Search, Sliders, Settings as ConfigIcon,
   Sparkles, ExternalLink, School, HelpCircle, GraduationCap, X, ChevronRight, Eye
 } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
 
 // Types
 import {
@@ -33,11 +34,11 @@ import AdminPanel from './components/AdminPanel';
 
 export default function App() {
   // ----------------------------------------------------
-  // LOCALSTORAGE SYNC HOOKS
+  // CLERK AUTHENTICATION HOOK
   // ----------------------------------------------------
-  const [currentRole, setCurrentRole] = useState<UserRole>(() => {
-    return (localStorage.getItem('zw_role') as UserRole) || 'guest';
-  });
+  const { isSignedIn } = useAuth();
+  const currentRole: UserRole = isSignedIn ? 'super_admin' : 'guest';
+
 
   const [activeView, setActiveView] = useState<string>('home');
   const [selectedInstitutionSlug, setSelectedInstitutionSlug] = useState<string | null>(null);
@@ -92,9 +93,7 @@ export default function App() {
   const [selectedUniformForQuickView, setSelectedUniformForQuickView] = useState<Uniform | null>(null);
 
   // Sync to Storage on mutate
-  useEffect(() => {
-    localStorage.setItem('zw_role', currentRole);
-  }, [currentRole]);
+
 
   useEffect(() => {
     localStorage.setItem('zw_slides', JSON.stringify(slides));
@@ -196,7 +195,6 @@ export default function App() {
         activeView={activeView}
         setActiveView={setActiveView}
         currentRole={currentRole}
-        setCurrentRole={setCurrentRole}
         setSelectedInstitutionSlug={setSelectedInstitutionSlug}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}

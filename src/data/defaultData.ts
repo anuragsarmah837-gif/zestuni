@@ -431,6 +431,7 @@ export const DEFAULT_CONTACT_SUBMISSIONS: ContactSubmission[] = [
 ];
 
 export const DEFAULT_SETTINGS: WebsiteSettings = {
+  logoImage: '',
   logoText: 'ZESTWEAR',
   logoSubText: 'UNIFORMS',
   favicon: '⚡',
