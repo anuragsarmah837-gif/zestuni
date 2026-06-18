@@ -435,12 +435,12 @@ export const DEFAULT_SETTINGS: WebsiteSettings = {
   logoText: 'ZESTWEAR',
   logoSubText: 'UNIFORMS',
   favicon: '⚡',
-  contactEmail: 'partnership@zestwearuniforms.com',
-  contactPhone: '+91 94355 12121',
-  contactAddress: 'T.R. Phukan Road, Jorhat, Assam - 785001',
-  whatsappNumber: '919435512121', // exact format for direct url
+  contactEmail: 'zestwearuniforms@gmail.com',
+  contactPhone: '+91 70021 37717',
+  contactAddress: 'Agriculture Road, Borbheta, Jorhat, Assam - 785001',
+  whatsappNumber: '917002137717', // exact format for direct url
   socialLinks: {
-    instagram: 'https://instagram.com/zestwear_uniforms',
+    instagram: 'https://instagram.com/zestwearuniforms',
     facebook: 'https://facebook.com/zestwear_uniforms',
     twitter: 'https://twitter.com/zestwear_uni'
   },
