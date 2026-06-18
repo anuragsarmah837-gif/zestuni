@@ -194,7 +194,6 @@ export default function App() {
       <Navbar
         activeView={activeView}
         setActiveView={setActiveView}
-        currentRole={currentRole}
         setSelectedInstitutionSlug={setSelectedInstitutionSlug}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
