@@ -53,9 +53,8 @@ export default function HeroSlider({ slides, onFindUniform, onPartnerWithUs }: H
       {activeSlides.map((slide, index) => (
         <div
           key={slide.id}
-          className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
-            index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-          }`}
+          className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
         >
           {/* Background Image */}
           <img
@@ -134,9 +133,8 @@ export default function HeroSlider({ slides, onFindUniform, onPartnerWithUs }: H
           <button
             key={idx}
             onClick={() => setCurrentIndex(idx)}
-            className={`transition-all duration-500 rounded-full ${
-              idx === currentIndex ? 'w-8 h-2 bg-white' : 'w-2.5 h-2.5 bg-white/40 hover:bg-white/60'
-            }`}
+            className={`transition-all duration-500 rounded-full ${idx === currentIndex ? 'w-8 h-2 bg-white' : 'w-2.5 h-2.5 bg-white/40 hover:bg-white/60'
+              }`}
             aria-label={`Go to slide ${idx + 1}`}
           />
         ))}
@@ -149,7 +147,7 @@ export default function HeroSlider({ slides, onFindUniform, onPartnerWithUs }: H
             {/* Stat 1 */}
             <div className="text-center">
               <span className="block text-xl lg:text-2xl font-extrabold text-white tracking-tight leading-none mb-1">
-                500+
+                50+
               </span>
               <span className="block text-[10px] uppercase font-mono tracking-widest text-neutral-400">
                 Institutions Enrolled
@@ -158,7 +156,7 @@ export default function HeroSlider({ slides, onFindUniform, onPartnerWithUs }: H
             {/* Stat 2 */}
             <div className="text-center border-x border-neutral-800 px-12 lg:px-20">
               <span className="block text-xl lg:text-2xl font-extrabold text-white tracking-tight leading-none mb-1">
-                50K+
+                50+
               </span>
               <span className="block text-[10px] uppercase font-mono tracking-widest text-neutral-400">
                 Verified Campus Students
@@ -167,7 +165,7 @@ export default function HeroSlider({ slides, onFindUniform, onPartnerWithUs }: H
             {/* Stat 3 */}
             <div className="text-center">
               <span className="block text-xl lg:text-2xl font-extrabold text-white tracking-tight leading-none mb-1">
-                100K+
+                100+
               </span>
               <span className="block text-[10px] uppercase font-mono tracking-widest text-neutral-400">
                 Orders Delivered

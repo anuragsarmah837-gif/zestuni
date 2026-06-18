@@ -7,7 +7,9 @@ interface TrustedInstitutionsProps {
 }
 
 export default function TrustedInstitutions({ institutions, onSelectInstitution }: TrustedInstitutionsProps) {
-  const verifiedList = institutions.filter(i => i.isVerified && !i.isSuspended);
+  const trustedList = institutions.filter(i => i.isVerified && !i.isSuspended && i.isTrusted).slice(0, 6);
+
+  if (trustedList.length === 0) return null;
 
   return (
     <section id="trusted-institutions" className="py-12 bg-neutral-50 dark:bg-neutral-900/50 border-y border-neutral-100 dark:border-neutral-900 overflow-hidden">
@@ -18,9 +20,8 @@ export default function TrustedInstitutions({ institutions, onSelectInstitution 
 
         {/* Scrolling Infinite Banner */}
         <div className="relative w-full flex overflow-x-hidden">
-          <div className="flex gap-6 shrink-0 animate-marquee whitespace-nowrap py-1">
-            {/* Set 1 */}
-            {verifiedList.map(item => (
+          <div className={`flex gap-6 py-1 ${trustedList.length > 4 ? 'shrink-0 animate-marquee whitespace-nowrap' : 'flex-wrap justify-center w-full'}`}>
+            {trustedList.map(item => (
               <button
                 key={`${item.id}-trust-1`}
                 onClick={() => onSelectInstitution(item.slug)}
@@ -39,8 +40,7 @@ export default function TrustedInstitutions({ institutions, onSelectInstitution 
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
               </button>
             ))}
-            {/* Set 2 (for loop visual continuity) */}
-            {verifiedList.map(item => (
+            {trustedList.length > 4 && trustedList.map(item => (
               <button
                 key={`${item.id}-trust-2`}
                 onClick={() => onSelectInstitution(item.slug)}
