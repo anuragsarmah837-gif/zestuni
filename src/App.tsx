@@ -1,0 +1,513 @@
+import { useState, useEffect } from 'react';
+import {
+  CheckCircle2, MapPin, Globe, Mail, Phone, Search, Sliders, Settings as ConfigIcon,
+  Sparkles, ExternalLink, School, HelpCircle, GraduationCap, X, ChevronRight, Eye
+} from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
+
+// Types
+import {
+  UserRole, HeroSlide, Institution, Uniform, UniformCategory,
+  InstitutionNotice, GalleryItem, ContactSubmission, WebsiteSettings
+} from './types';
+
+// Seed Data Fallbacks
+import {
+  DEFAULT_HERO_SLIDES, DEFAULT_INSTITUTIONS, DEFAULT_CATEGORIES,
+  DEFAULT_UNIFORMS, DEFAULT_NOTICES, DEFAULT_GALLERY,
+  DEFAULT_CONTACT_SUBMISSIONS, DEFAULT_SETTINGS
+} from './data/defaultData';
+
+// Component Imports
+import Navbar from './components/Navbar';
+import HeroSlider from './components/HeroSlider';
+import TrustedInstitutions from './components/TrustedInstitutions';
+import FeaturedInstitutions from './components/FeaturedInstitutions';
+import FeaturedUniforms from './components/FeaturedUniforms';
+import AboutSection from './components/AboutSection';
+import HowItWorks from './components/HowItWorks';
+import ContactSection from './components/ContactSection';
+import Footer from './components/Footer';
+import ProductDetailModal from './components/ProductDetailModal';
+import InstitutionPortal from './components/InstitutionPortal';
+import AdminPanel from './components/AdminPanel';
+import { fetchInitialData, submitContact, syncData } from './services/api';
+
+export default function App() {
+  // ----------------------------------------------------
+  // CLERK AUTHENTICATION HOOK
+  // ----------------------------------------------------
+  const { isSignedIn } = useAuth();
+  const currentRole: UserRole = isSignedIn ? 'super_admin' : 'guest';
+
+  const [activeView, setActiveView] = useState<string>('home');
+  const [selectedInstitutionSlug, setSelectedInstitutionSlug] = useState<string | null>(null);
+
+  // Core Arrays
+  const [slides, setSlides] = useState<HeroSlide[]>(() => {
+    const saved = localStorage.getItem('zw_slides');
+    return saved ? JSON.parse(saved) : DEFAULT_HERO_SLIDES;
+  });
+
+  const [institutions, setInstitutions] = useState<Institution[]>(() => {
+    const saved = localStorage.getItem('zw_institutions');
+    return saved ? JSON.parse(saved) : DEFAULT_INSTITUTIONS;
+  });
+
+  const [uniforms, setUniforms] = useState<Uniform[]>(() => {
+    const saved = localStorage.getItem('zw_uniforms');
+    return saved ? JSON.parse(saved) : DEFAULT_UNIFORMS;
+  });
+
+  const [categories, setCategories] = useState<UniformCategory[]>(() => {
+    const saved = localStorage.getItem('zw_categories');
+    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
+  });
+
+  const [notices, setNotices] = useState<InstitutionNotice[]>(() => {
+    const saved = localStorage.getItem('zw_notices');
+    return saved ? JSON.parse(saved) : DEFAULT_NOTICES;
+  });
+
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => {
+    const saved = localStorage.getItem('zw_gallery');
+    return saved ? JSON.parse(saved) : DEFAULT_GALLERY;
+  });
+
+  const [contacts, setContacts] = useState<ContactSubmission[]>(() => {
+    const saved = localStorage.getItem('zw_contacts');
+    return saved ? JSON.parse(saved) : DEFAULT_CONTACT_SUBMISSIONS;
+  });
+
+  const [settings, setSettings] = useState<WebsiteSettings>(() => {
+    const saved = localStorage.getItem('zw_settings');
+    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+  });
+
+  // Search and Filtering HUD States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cityFilter, setCityFilter] = useState('all');
+  const [stateFilter, setStateFilter] = useState('all');
+
+  // Quick View HUD
+  const [selectedUniformForQuickView, setSelectedUniformForQuickView] = useState<Uniform | null>(null);
+
+  // Loading state for database fetch
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load aggregate data from NeonDB backend on mount
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const dbData = await fetchInitialData();
+        if (dbData.slides && dbData.slides.length > 0) setSlides(dbData.slides);
+        if (dbData.institutions && dbData.institutions.length > 0) setInstitutions(dbData.institutions);
+        if (dbData.uniforms && dbData.uniforms.length > 0) setUniforms(dbData.uniforms);
+        if (dbData.categories && dbData.categories.length > 0) setCategories(dbData.categories);
+        if (dbData.notices && dbData.notices.length > 0) setNotices(dbData.notices);
+        if (dbData.galleryItems && dbData.galleryItems.length > 0) setGalleryItems(dbData.galleryItems);
+        if (dbData.contacts && dbData.contacts.length > 0) setContacts(dbData.contacts);
+        if (dbData.settings) setSettings(dbData.settings);
+      } catch (err) {
+        console.error('Failed to load data from NeonDB database, falling back to local storage/default data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Sync to NeonDB on state mutations (ignoring the initial loading phase)
+  useEffect(() => {
+    if (isLoading) return;
+    syncData('slides', slides).catch(console.error);
+    localStorage.setItem('zw_slides', JSON.stringify(slides));
+  }, [slides, isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    syncData('institutions', institutions).catch(console.error);
+    localStorage.setItem('zw_institutions', JSON.stringify(institutions));
+  }, [institutions, isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    syncData('uniforms', uniforms).catch(console.error);
+    localStorage.setItem('zw_uniforms', JSON.stringify(uniforms));
+  }, [uniforms, isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    syncData('categories', categories).catch(console.error);
+    localStorage.setItem('zw_categories', JSON.stringify(categories));
+  }, [categories, isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    syncData('notices', notices).catch(console.error);
+    localStorage.setItem('zw_notices', JSON.stringify(notices));
+  }, [notices, isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    syncData('galleryItems', galleryItems).catch(console.error);
+    localStorage.setItem('zw_gallery', JSON.stringify(galleryItems));
+  }, [galleryItems, isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    syncData('contacts', contacts).catch(console.error);
+    localStorage.setItem('zw_contacts', JSON.stringify(contacts));
+  }, [contacts, isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    syncData('settings', settings).catch(console.error);
+    localStorage.setItem('zw_settings', JSON.stringify(settings));
+  }, [settings, isLoading]);
+
+  // Handle direct navigation routing callback
+  const handleSelectInstitution = (slug: string) => {
+    setSelectedInstitutionSlug(slug);
+    setActiveView('home'); // resets general path view to highlight portal
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePartnerWithUs = () => {
+    setActiveView('contact');
+    setSelectedInstitutionSlug(null);
+    setTimeout(() => {
+      const contactSection = document.getElementById('contact');
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
+  const handleFindUniform = () => {
+    setActiveView('uniforms');
+    setSelectedInstitutionSlug(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Submit contact submitter synchronizers
+  const handleNewSubmission = (submission: Omit<ContactSubmission, 'id' | 'date' | 'isRead'>) => {
+    const newRecord: ContactSubmission = {
+      id: `c-${Date.now()}`,
+      ...submission,
+      date: new Date().toISOString().split('T')[0],
+      isRead: false
+    };
+    setContacts(prev => [newRecord, ...prev]);
+    submitContact(newRecord).catch(console.error);
+  };
+
+  // Extract cities and states for dynamic filters in directory
+  const availableCities = Array.from(new Set(institutions.map(i => i.city)));
+  const availableStates = Array.from(new Set(institutions.map(i => i.state)));
+
+  // Filter verified institutions for main Directory list
+  const filteredInstitutionsDirectory = institutions.filter(inst => {
+    if (!inst.isVerified || inst.isSuspended) return false;
+    if (cityFilter !== 'all' && inst.city !== cityFilter) return false;
+    if (stateFilter !== 'all' && inst.state !== stateFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return (
+        inst.name.toLowerCase().includes(q) ||
+        inst.city.toLowerCase().includes(q) ||
+        inst.state.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  // Determine which active institution is rendered for portal
+  const activePortalInstitution = selectedInstitutionSlug
+    ? institutions.find(i => i.slug === selectedInstitutionSlug && !i.isSuspended)
+    : null;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4 text-white">
+        <div className="w-12 h-12 rounded-full border-4 border-neutral-800 border-t-white animate-spin"></div>
+        <div className="text-xs font-mono tracking-widest text-neutral-400 uppercase animate-pulse">Synchronizing with NeonDB...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="font-sans text-neutral-800 dark:text-neutral-100 dark:bg-black antialiased min-h-screen flex flex-col justify-between">
+      
+      {/* 1. Global Navigation Bar */}
+      <Navbar
+        activeView={activeView}
+        setActiveView={setActiveView}
+        setSelectedInstitutionSlug={setSelectedInstitutionSlug}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        settings={settings}
+      />
+
+      {/* Admin Panel Quick Back Floating Action Bar */}
+      {activeView === 'admin' && (
+        <div className="fixed top-24 left-6 z-40">
+          <button
+            onClick={() => { setActiveView('home'); setSelectedInstitutionSlug(null); }}
+            className="flex items-center gap-1.5 px-4 py-2 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-black rounded-full text-xs font-bold shadow-md hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-800 dark:text-neutral-100 transition-colors"
+          >
+            ← Leave Admin Console
+          </button>
+        </div>
+      )}
+
+      {/* 2. Page Router Framework */}
+      <main className="flex-1">
+        {activeView === 'admin' ? (
+          /* ADMIN CONSOLE VIEW */
+          <AdminPanel
+            currentRole={currentRole}
+            slides={slides}
+            setSlides={setSlides}
+            institutions={institutions}
+            setInstitutions={setInstitutions}
+            uniforms={uniforms}
+            setUniforms={setUniforms}
+            categories={categories}
+            setCategories={setCategories}
+            notices={notices}
+            setNotices={setNotices}
+            galleryItems={galleryItems}
+            setGalleryItems={setGalleryItems}
+            contacts={contacts}
+            setContacts={setContacts}
+            settings={settings}
+            setSettings={setSettings}
+          />
+        ) : activePortalInstitution ? (
+          /* DYNAMIC PORTAL PAGE FOR SELECTED COLLEGE/SCHOOL */
+          <InstitutionPortal
+            institution={activePortalInstitution}
+            uniforms={uniforms}
+            categories={categories}
+            notices={notices}
+            galleryItems={galleryItems}
+            onQuickView={(uni) => setSelectedUniformForQuickView(uni)}
+            onInstantOrder={(uni) => setSelectedUniformForQuickView(uni)}
+            onNewContactSubmission={handleNewSubmission}
+          />
+        ) : activeView === 'institutions' ? (
+          /* INSTITUTIONS DIRECTORY LISTINGS PAGE */
+          <div className="pt-24 min-h-screen bg-neutral-50 dark:bg-black">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+              
+              {/* Header */}
+              <div className="text-center space-y-4 mb-12">
+                <span className="text-xs font-mono tracking-[0.25em] text-neutral-400 uppercase">OFFICIAL DIRECTORY</span>
+                <h1 className="text-3xl sm:text-5.5xl font-extrabold font-sans tracking-tight text-neutral-900 dark:text-white leading-none">
+                  Verified Partner portals
+                </h1>
+                <p className="text-sm text-neutral-500 max-w-lg mx-auto leading-relaxed">
+                  Search school, college, and university catalogs. Secure compliant dress codes and uniforms.
+                </p>
+              </div>
+
+              {/* Filtering Toolbar */}
+              <div className="bg-white dark:bg-neutral-950 p-6 border rounded-2xl flex flex-col md:flex-row items-center gap-6 justify-between mb-10 shadow-xs">
+                
+                {/* Search Bar */}
+                <div className="relative w-full md:w-1/3">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                  <input
+                    type="text"
+                    placeholder="Search name, city, state..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 dark:bg-black border rounded-xl text-sm focus:outline-none focus:border-black dark:focus:border-white"
+                  />
+                </div>
+
+                {/* City filter & state filter */}
+                <div className="flex flex-wrap gap-4 w-full md:w-auto items-center justify-end">
+                  {/* City */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold">City</span>
+                    <select
+                      value={cityFilter}
+                      onChange={(e) => setCityFilter(e.target.value)}
+                      className="px-3.5 py-2 bg-neutral-50 dark:bg-black border rounded-xl text-xs font-semibold"
+                    >
+                      <option value="all">All Cities</option>
+                      {availableCities.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* State */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold">State</span>
+                    <select
+                      value={stateFilter}
+                      onChange={(e) => setStateFilter(e.target.value)}
+                      className="px-3.5 py-2 bg-neutral-50 dark:bg-black border rounded-xl text-xs font-semibold"
+                    >
+                      <option value="all">All States</option>
+                      {availableStates.map(st => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid block */}
+              {filteredInstitutionsDirectory.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-3xl border">
+                  <School className="w-12 h-12 text-neutral-300 mx-auto mb-4" />
+                  <h4 className="font-bold text-neutral-700">No Verified Institutions Found</h4>
+                  <p className="text-xs text-neutral-400 max-w-xs mx-auto">No schools match the filter or search credentials.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {filteredInstitutionsDirectory.map(inst => (
+                    <div
+                      key={inst.id}
+                      className="group bg-white dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-900 rounded-2xl overflow-hidden hover:border-black dark:hover:border-white transition-all shadow-xs"
+                    >
+                      <div className="relative h-44 overflow-hidden bg-neutral-100">
+                        <img src={inst.banner} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-102" />
+                        <span className="absolute top-3 right-3 px-3 py-1 bg-white/95 text-black text-[9px] font-mono font-extrabold rounded-full uppercase shadow-md flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-green-500 fill-green-500/10" /> Verified
+                        </span>
+                      </div>
+
+                      <div className="p-6 relative pt-12">
+                        {/* Logo Overlap */}
+                        <div className="absolute top-0 left-6 -translate-y-1/2 w-16 h-16 rounded-xl border bg-white shadow-md overflow-hidden flex items-center justify-center p-0.5">
+                          <img src={inst.logo} className="w-full h-full object-cover rounded-lg" />
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-lg font-extrabold font-sans tracking-tight text-neutral-900 dark:text-white leading-none">
+                              {inst.name}
+                            </h3>
+                            <div className="flex items-center gap-1 text-xs text-neutral-400 mt-1">
+                              <MapPin className="w-3.5 h-3.5" />
+                              <span>{inst.city}, {inst.state}</span>
+                            </div>
+                          </div>
+
+                          <p className="text-neutral-500 dark:text-neutral-400 text-xs line-clamp-2 leading-relaxed">
+                            {inst.description}
+                          </p>
+
+                          <button
+                            onClick={() => handleSelectInstitution(inst.slug)}
+                            className="w-full py-3 bg-black text-white dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-100 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300"
+                          >
+                            Explore Portal Store
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
+          </div>
+        ) : activeView === 'uniforms' ? (
+          /* GLOBAL BROWSE UNIFORMS PAGE */
+          <div className="pt-24 bg-neutral-50 dark:bg-black">
+            <FeaturedUniforms
+              uniforms={uniforms}
+              categories={categories}
+              institutions={institutions}
+              onQuickView={(uni) => setSelectedUniformForQuickView(uni)}
+              onInstantOrder={(uni) => setSelectedUniformForQuickView(uni)}
+            />
+          </div>
+        ) : activeView === 'how-it-works' ? (
+          /* TIMELINE STEPS VIEW */
+          <div className="pt-24 bg-white dark:bg-black">
+            <HowItWorks />
+          </div>
+        ) : activeView === 'about' ? (
+          /* TEXT ABOUT DETAILS VIEW */
+          <div className="pt-16 bg-white dark:bg-black">
+            <AboutSection />
+          </div>
+        ) : activeView === 'contact' ? (
+          /* CONTACT VIEW PANEL */
+          <div className="pt-16">
+            <ContactSection settings={settings} onNewSubmission={handleNewSubmission} />
+          </div>
+        ) : (
+          /* DEFAULT ROOT HOME LANDING PAGE */
+          <div className="animate-fadeIn">
+            {/* Hero Slider Management */}
+            <HeroSlider
+              slides={slides}
+              onFindUniform={handleFindUniform}
+              onPartnerWithUs={handlePartnerWithUs}
+            />
+
+            {/* Scrolling Pillars */}
+            <TrustedInstitutions
+              institutions={institutions}
+              onSelectInstitution={handleSelectInstitution}
+            />
+
+            {/* Featured Institutions Grid */}
+            <FeaturedInstitutions
+              institutions={institutions}
+              onSelectInstitution={handleSelectInstitution}
+            />
+
+            {/* Featured Uniforms Category Grid */}
+            <FeaturedUniforms
+              uniforms={uniforms}
+              categories={categories}
+              institutions={institutions}
+              onQuickView={(uni) => setSelectedUniformForQuickView(uni)}
+              onInstantOrder={(uni) => setSelectedUniformForQuickView(uni)}
+            />
+
+            {/* Textile standards details */}
+            <AboutSection />
+
+            {/* 5 simplified ordering steps */}
+            <HowItWorks />
+
+            {/* Contact panel submissions */}
+            <ContactSection
+              settings={settings}
+              onNewSubmission={handleNewSubmission}
+            />
+          </div>
+        )}
+      </main>
+
+      {/* 3. Global footer */}
+      <Footer
+        settings={settings}
+        setActiveView={setActiveView}
+        setSelectedInstitutionSlug={setSelectedInstitutionSlug}
+      />
+
+      {/* 4. Product Zoom detailed popup */}
+      {selectedUniformForQuickView && (
+        <ProductDetailModal
+          uniform={selectedUniformForQuickView}
+          categories={categories}
+          institutions={institutions}
+          settings={settings}
+          onClose={() => setSelectedUniformForQuickView(null)}
+        />
+      )}
+    </div>
+  );
+}
