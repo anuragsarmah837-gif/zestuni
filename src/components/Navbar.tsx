@@ -10,6 +10,7 @@ interface NavbarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   settings: WebsiteSettings;
+  currentRole: UserRole;
 }
 
 export default function Navbar({
@@ -18,7 +19,8 @@ export default function Navbar({
   setSelectedInstitutionSlug,
   searchQuery,
   setSearchQuery,
-  settings
+  settings,
+  currentRole
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -159,13 +161,15 @@ export default function Navbar({
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleNavClick('admin')}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-mono font-medium border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 transition-all shadow-xs"
-                  >
-                    <LayoutDashboard className="w-3.5 h-3.5" />
-                    <span className="hidden lg:inline">Admin</span>
-                  </button>
+                  {currentRole === 'super_admin' && (
+                    <button
+                      onClick={() => handleNavClick('admin')}
+                      className="flex items-center gap-1.5 px-3 py-2 text-xs font-mono font-medium border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 transition-all shadow-xs"
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5" />
+                      <span className="hidden lg:inline">Admin</span>
+                    </button>
+                  )}
                   <UserButton afterSignOutUrl="/" />
                 </div>
               )}

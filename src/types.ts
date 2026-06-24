@@ -2,7 +2,7 @@
  * Types and interfaces for Zestwear Uniforms platform.
  */
 
-export type UserRole = 'guest' | 'super_admin';
+export type UserRole = 'guest' | 'user' | 'super_admin';
 
 export interface User {
   id: string;

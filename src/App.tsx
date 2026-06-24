@@ -3,7 +3,7 @@ import {
   CheckCircle2, MapPin, Globe, Mail, Phone, Search, Sliders, Settings as ConfigIcon,
   Sparkles, ExternalLink, School, HelpCircle, GraduationCap, X, ChevronRight, Eye
 } from 'lucide-react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 
 // Types
 import {
@@ -38,7 +38,16 @@ export default function App() {
   // CLERK AUTHENTICATION HOOK
   // ----------------------------------------------------
   const { isSignedIn } = useAuth();
-  const currentRole: UserRole = isSignedIn ? 'super_admin' : 'guest';
+  const { user } = useUser();
+  
+  let currentRole: UserRole = 'guest';
+  if (isSignedIn) {
+    if (user?.publicMetadata?.role === 'admin' || user?.publicMetadata?.role === 'super_admin') {
+      currentRole = 'super_admin';
+    } else {
+      currentRole = 'user';
+    }
+  }
 
   const [activeView, setActiveView] = useState<string>('home');
   const [selectedInstitutionSlug, setSelectedInstitutionSlug] = useState<string | null>(null);
@@ -172,6 +181,33 @@ export default function App() {
   }, []);
 
   // ----------------------------------------------------
+  // DYNAMIC SEO OPTIMIZATION
+  // ----------------------------------------------------
+  useEffect(() => {
+    if (settings && settings.seo) {
+      document.title = settings.seo.metaTitle || 'Zestwear Uniforms';
+      
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.setAttribute('name', 'description');
+        document.head.appendChild(metaDesc);
+      }
+      metaDesc.setAttribute('content', settings.seo.metaDescription || 'Premium school and digital ordering platform.');
+
+      let ogImage = document.querySelector('meta[property="og:image"]');
+      if (!ogImage) {
+        ogImage = document.createElement('meta');
+        ogImage.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImage);
+      }
+      if (settings.seo.ogImage) {
+        ogImage.setAttribute('content', settings.seo.ogImage);
+      }
+    }
+  }, [settings]);
+
+  // ----------------------------------------------------
   // SYNC TO DB ONLY AFTER ADMIN EDITS (not on initial load)
   // ----------------------------------------------------
   // These effects only sync when adminModifiedTypes contains the type
@@ -297,6 +333,7 @@ export default function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         settings={settings}
+        currentRole={currentRole}
       />
 
       {/* Sync Status Indicator */}
