@@ -110,11 +110,11 @@ export default function AdminPanel({
   const [instForm, setInstForm] = useState<Omit<Institution, 'id'>>({
     name: '',
     slug: '',
-    logo: 'https://images.unsplash.com/photo-1594312915251-48db9280c8f1?auto=format&fit=crop&q=80&w=200',
-    banner: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1000',
+    logo: '',
+    banner: '',
     address: '',
     city: '',
-    state: 'Assam',
+    state: '',
     pincode: '',
     website: '',
     email: '',
@@ -205,20 +205,20 @@ export default function AdminPanel({
   // SUB-FORMS: UNIFORM SKU MANAGEMENT
   // ----------------------------------------------------
   const [uniForm, setUniForm] = useState<Omit<Uniform, 'id'>>({
-    institutionId: 'inst-1',
+    institutionId: '',
     name: '',
     sku: '',
-    categoryId: 'cat-1',
-    gender: 'boys',
+    categoryId: '',
+    gender: 'unisex',
     description: '',
     fabricType: '',
-    price: 1200,
+    price: 0,
     discountPrice: undefined,
-    availableSizes: ['S', 'M', 'L'],
-    stockQuantity: 100,
+    availableSizes: [],
+    stockQuantity: 0,
     isArchived: false,
     images: {
-      main: 'https://images.unsplash.com/photo-1594744803329-e58b31de215f?auto=format&fit=crop&q=80&w=600',
+      main: '',
       front: '',
       back: '',
       side: '',
@@ -400,20 +400,20 @@ export default function AdminPanel({
     });
     setInstForm({
       name: '', slug: '',
-      logo: 'https://images.unsplash.com/photo-1594312915251-48db9280c8f1?auto=format&fit=crop&q=80&w=200',
-      banner: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1000',
-      address: '', city: '', state: 'Assam', pincode: '',
+      logo: '',
+      banner: '',
+      address: '', city: '', state: '', pincode: '',
       website: '', email: '', phone: '', description: '', mission: '', vision: '',
       isVerified: true, isSuspended: false
     });
     setUniForm({
-      institutionId: selectedInstId || 'inst-1', name: '', sku: '', categoryId: categories[0]?.id || 'cat-1', gender: 'boys',
-      description: '', fabricType: '', price: 1200, discountPrice: undefined,
-      availableSizes: ['S', 'M', 'L'], stockQuantity: 100, isArchived: false,
-      images: { main: 'https://images.unsplash.com/photo-1594744803329-e58b31de215f?auto=format&fit=crop&q=80&w=600', front: '', back: '', side: '', gallery: [] }
+      institutionId: selectedInstId || '', name: '', sku: '', categoryId: categories[0]?.id || '', gender: 'unisex',
+      description: '', fabricType: '', price: 0, discountPrice: undefined,
+      availableSizes: [], stockQuantity: 0, isArchived: false,
+      images: { main: '', front: '', back: '', side: '', gallery: [] }
     });
     setNoticeForm({
-      institutionId: 'inst-1', title: '', description: '', attachment: '',
+      institutionId: '', title: '', description: '', attachment: '',
       publishDate: new Date().toISOString().split('T')[0]
     });
   };

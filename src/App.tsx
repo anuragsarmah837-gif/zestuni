@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   CheckCircle2, MapPin, Globe, Mail, Phone, Search, Sliders, Settings as ConfigIcon,
   Sparkles, ExternalLink, School, HelpCircle, GraduationCap, X, ChevronRight, Eye
@@ -43,7 +43,17 @@ export default function App() {
   const [activeView, setActiveView] = useState<string>('home');
   const [selectedInstitutionSlug, setSelectedInstitutionSlug] = useState<string | null>(null);
 
-  // Core Arrays
+  // ----------------------------------------------------
+  // SYNC STATE TRACKING
+  // ----------------------------------------------------
+  // Track if initial DB load has completed to prevent overwriting DB with stale localStorage data
+  const hasLoadedFromDB = useRef(false);
+  // Track which data types have been modified by admin (to sync only admin changes)
+  const adminModifiedTypes = useRef<Set<string>>(new Set());
+  // Sync status for UI feedback
+  const [syncStatus, setSyncStatus] = useState<{ type: string; status: 'syncing' | 'success' | 'error' } | null>(null);
+
+  // Core Arrays - Initialize from localStorage as fallback, but DB data takes priority
   const [slides, setSlides] = useState<HeroSlide[]>(() => {
     const saved = localStorage.getItem('zw_slides');
     return saved ? JSON.parse(saved) : DEFAULT_HERO_SLIDES;
@@ -95,21 +105,65 @@ export default function App() {
   // Loading state for database fetch
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load aggregate data from NeonDB backend on mount
+  // ----------------------------------------------------
+  // HELPER: Sync single data type to DB with error handling
+  // ----------------------------------------------------
+  const syncToDB = useCallback(async (type: string, data: any) => {
+    setSyncStatus({ type, status: 'syncing' });
+    try {
+      await syncData(type as any, data);
+      localStorage.setItem(`zw_${type}`, JSON.stringify(data));
+      setSyncStatus({ type, status: 'success' });
+      // Clear success status after 2 seconds
+      setTimeout(() => setSyncStatus(null), 2000);
+    } catch (err) {
+      console.error(`Failed to sync ${type} to database:`, err);
+      setSyncStatus({ type, status: 'error' });
+      // Still save to localStorage as fallback
+      localStorage.setItem(`zw_${type}`, JSON.stringify(data));
+    }
+  }, []);
+
+  // ----------------------------------------------------
+  // LOAD DATA FROM DATABASE ON MOUNT
+  // ----------------------------------------------------
   useEffect(() => {
     async function loadData() {
+      let dbSuccess = false;
       try {
         const dbData = await fetchInitialData();
-        if (dbData.slides && dbData.slides.length > 0) setSlides(dbData.slides);
-        if (dbData.institutions && dbData.institutions.length > 0) setInstitutions(dbData.institutions);
-        if (dbData.uniforms && dbData.uniforms.length > 0) setUniforms(dbData.uniforms);
-        if (dbData.categories && dbData.categories.length > 0) setCategories(dbData.categories);
-        if (dbData.notices && dbData.notices.length > 0) setNotices(dbData.notices);
-        if (dbData.galleryItems && dbData.galleryItems.length > 0) setGalleryItems(dbData.galleryItems);
-        if (dbData.contacts && dbData.contacts.length > 0) setContacts(dbData.contacts);
+        dbSuccess = true;
+        
+        // DB is the source of truth — always update from DB (even if empty)
+        setSlides(dbData.slides || []);
+        setInstitutions(dbData.institutions || []);
+        setUniforms(dbData.uniforms || []);
+        setCategories(dbData.categories || []);
+        setNotices(dbData.notices || []);
+        setGalleryItems(dbData.galleryItems || []);
+        setContacts(dbData.contacts || []);
         if (dbData.settings) setSettings(dbData.settings);
+        
+        // Update localStorage cache with DB data
+        localStorage.setItem('zw_slides', JSON.stringify(dbData.slides || []));
+        localStorage.setItem('zw_institutions', JSON.stringify(dbData.institutions || []));
+        localStorage.setItem('zw_uniforms', JSON.stringify(dbData.uniforms || []));
+        localStorage.setItem('zw_categories', JSON.stringify(dbData.categories || []));
+        localStorage.setItem('zw_notices', JSON.stringify(dbData.notices || []));
+        localStorage.setItem('zw_gallery', JSON.stringify(dbData.galleryItems || []));
+        localStorage.setItem('zw_contacts', JSON.stringify(dbData.contacts || []));
+        if (dbData.settings) localStorage.setItem('zw_settings', JSON.stringify(dbData.settings));
+        
+        // Mark that we've loaded from DB - now sync effects can run
+        hasLoadedFromDB.current = true;
       } catch (err) {
-        console.error('Failed to load data from NeonDB database, falling back to local storage/default data:', err);
+        console.error('Failed to load data from NeonDB, using cached data:', err);
+        // Only use localStorage as fallback if DB fetch failed
+        if (!dbSuccess) {
+          const savedSlides = localStorage.getItem('zw_slides');
+          if (savedSlides) setSlides(JSON.parse(savedSlides));
+        }
+        hasLoadedFromDB.current = true;
       } finally {
         setIsLoading(false);
       }
@@ -117,54 +171,50 @@ export default function App() {
     loadData();
   }, []);
 
-  // Sync to NeonDB on state mutations (ignoring the initial loading phase)
+  // ----------------------------------------------------
+  // SYNC TO DB ONLY AFTER ADMIN EDITS (not on initial load)
+  // ----------------------------------------------------
+  // These effects only sync when adminModifiedTypes contains the type
+  // This prevents the initial DB load from triggering a re-sync
   useEffect(() => {
-    if (isLoading) return;
-    syncData('slides', slides).catch(console.error);
-    localStorage.setItem('zw_slides', JSON.stringify(slides));
-  }, [slides, isLoading]);
+    if (!hasLoadedFromDB.current || !adminModifiedTypes.current.has('slides')) return;
+    syncToDB('slides', slides);
+  }, [slides, syncToDB]);
 
   useEffect(() => {
-    if (isLoading) return;
-    syncData('institutions', institutions).catch(console.error);
-    localStorage.setItem('zw_institutions', JSON.stringify(institutions));
-  }, [institutions, isLoading]);
+    if (!hasLoadedFromDB.current || !adminModifiedTypes.current.has('institutions')) return;
+    syncToDB('institutions', institutions);
+  }, [institutions, syncToDB]);
 
   useEffect(() => {
-    if (isLoading) return;
-    syncData('uniforms', uniforms).catch(console.error);
-    localStorage.setItem('zw_uniforms', JSON.stringify(uniforms));
-  }, [uniforms, isLoading]);
+    if (!hasLoadedFromDB.current || !adminModifiedTypes.current.has('uniforms')) return;
+    syncToDB('uniforms', uniforms);
+  }, [uniforms, syncToDB]);
 
   useEffect(() => {
-    if (isLoading) return;
-    syncData('categories', categories).catch(console.error);
-    localStorage.setItem('zw_categories', JSON.stringify(categories));
-  }, [categories, isLoading]);
+    if (!hasLoadedFromDB.current || !adminModifiedTypes.current.has('categories')) return;
+    syncToDB('categories', categories);
+  }, [categories, syncToDB]);
 
   useEffect(() => {
-    if (isLoading) return;
-    syncData('notices', notices).catch(console.error);
-    localStorage.setItem('zw_notices', JSON.stringify(notices));
-  }, [notices, isLoading]);
+    if (!hasLoadedFromDB.current || !adminModifiedTypes.current.has('notices')) return;
+    syncToDB('notices', notices);
+  }, [notices, syncToDB]);
 
   useEffect(() => {
-    if (isLoading) return;
-    syncData('galleryItems', galleryItems).catch(console.error);
-    localStorage.setItem('zw_gallery', JSON.stringify(galleryItems));
-  }, [galleryItems, isLoading]);
+    if (!hasLoadedFromDB.current || !adminModifiedTypes.current.has('galleryItems')) return;
+    syncToDB('galleryItems', galleryItems);
+  }, [galleryItems, syncToDB]);
 
   useEffect(() => {
-    if (isLoading) return;
-    syncData('contacts', contacts).catch(console.error);
-    localStorage.setItem('zw_contacts', JSON.stringify(contacts));
-  }, [contacts, isLoading]);
+    if (!hasLoadedFromDB.current || !adminModifiedTypes.current.has('contacts')) return;
+    syncToDB('contacts', contacts);
+  }, [contacts, syncToDB]);
 
   useEffect(() => {
-    if (isLoading) return;
-    syncData('settings', settings).catch(console.error);
-    localStorage.setItem('zw_settings', JSON.stringify(settings));
-  }, [settings, isLoading]);
+    if (!hasLoadedFromDB.current || !adminModifiedTypes.current.has('settings')) return;
+    syncToDB('settings', settings);
+  }, [settings, syncToDB]);
 
   // Handle direct navigation routing callback
   const handleSelectInstitution = (slug: string) => {
@@ -249,6 +299,40 @@ export default function App() {
         settings={settings}
       />
 
+      {/* Sync Status Indicator */}
+      {syncStatus && (
+        <div className={`fixed top-24 right-6 z-50 px-4 py-2 rounded-lg shadow-lg text-xs font-mono tracking-wide transition-all duration-300 ${
+          syncStatus.status === 'syncing' 
+            ? 'bg-blue-500 text-white' 
+            : syncStatus.status === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+        }`}>
+          {syncStatus.status === 'syncing' && (
+            <span className="flex items-center gap-2">
+              <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              Syncing {syncStatus.type}...
+            </span>
+          )}
+          {syncStatus.status === 'success' && (
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {syncStatus.type} synced
+            </span>
+          )}
+          {syncStatus.status === 'error' && (
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Sync failed - saved locally
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Admin Panel Quick Back Floating Action Bar */}
       {activeView === 'admin' && (
         <div className="fixed top-24 left-6 z-40">
@@ -268,21 +352,21 @@ export default function App() {
           <AdminPanel
             currentRole={currentRole}
             slides={slides}
-            setSlides={setSlides}
+            setSlides={(val) => { adminModifiedTypes.current.add('slides'); setSlides(val); }}
             institutions={institutions}
-            setInstitutions={setInstitutions}
+            setInstitutions={(val) => { adminModifiedTypes.current.add('institutions'); setInstitutions(val); }}
             uniforms={uniforms}
-            setUniforms={setUniforms}
+            setUniforms={(val) => { adminModifiedTypes.current.add('uniforms'); setUniforms(val); }}
             categories={categories}
-            setCategories={setCategories}
+            setCategories={(val) => { adminModifiedTypes.current.add('categories'); setCategories(val); }}
             notices={notices}
-            setNotices={setNotices}
+            setNotices={(val) => { adminModifiedTypes.current.add('notices'); setNotices(val); }}
             galleryItems={galleryItems}
-            setGalleryItems={setGalleryItems}
+            setGalleryItems={(val) => { adminModifiedTypes.current.add('galleryItems'); setGalleryItems(val); }}
             contacts={contacts}
-            setContacts={setContacts}
+            setContacts={(val) => { adminModifiedTypes.current.add('contacts'); setContacts(val); }}
             settings={settings}
-            setSettings={setSettings}
+            setSettings={(val) => { adminModifiedTypes.current.add('settings'); setSettings(val); }}
           />
         ) : activePortalInstitution ? (
           /* DYNAMIC PORTAL PAGE FOR SELECTED COLLEGE/SCHOOL */

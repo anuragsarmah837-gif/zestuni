@@ -78,11 +78,9 @@ export default function AboutSection() {
             {/* Visual Media Placeholder Box - Designed elegantly on a black frame */}
             <div className="relative aspect-video rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-800 group shadow-lg">
               <div className="absolute inset-0 bg-neutral-950/40 z-10 transition-colors group-hover:bg-neutral-950/20" />
-              <img
-                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=800"
-                alt="Uniform Craftsmanship Video Background"
-                className="w-full h-full object-cover grayscale transition-transform duration-700 group-hover:scale-102"
-              />
+              <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+                <span className="text-neutral-500 text-sm">Upload Brand Image</span>
+              </div>
               <div className="absolute inset-0 z-20 flex flex-col justify-end p-6 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent">
                 <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-300">Brand Video</span>
                 <h4 className="text-base font-bold font-sans tracking-tight text-white mt-1">Impeccable Textile Standards</h4>
