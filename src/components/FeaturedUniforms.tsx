@@ -146,13 +146,7 @@ export default function FeaturedUniforms({
                         {uniform.name}
                       </h4>
 
-                      {/* Stock availability */}
-                      <div className="flex items-center gap-1.5 mb-4">
-                        <span className={`w-1.5 h-1.5 rounded-full ${uniform.stockQuantity > 20 ? 'bg-green-500' : 'bg-amber-500'}`} />
-                        <span className="text-[10px] uppercase font-mono tracking-wider text-neutral-400 dark:text-neutral-500">
-                          {uniform.stockQuantity > 0 ? `${uniform.stockQuantity} items in stock` : 'Out of Stock'}
-                        </span>
-                      </div>
+
                     </div>
 
                     {/* Footer Row (Price and Order Button) */}

@@ -25,9 +25,13 @@ export default function Footer({ settings, setActiveView, setSelectedInstitution
           {/* Brand Info */}
           <div className="md:col-span-4 space-y-6">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-sm">
-                ZW
-              </div>
+              {settings.logoImage ? (
+                <img src={settings.logoImage} alt="Logo" className="h-8 w-auto object-contain" />
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-sm">
+                  {settings.logoText.substring(0, 2).toUpperCase()}
+                </div>
+              )}
               <span className="font-sans font-extrabold text-base tracking-widest text-black dark:text-white uppercase leading-none">
                 {settings.logoText} <span className="text-neutral-400">{settings.logoSubText}</span>
               </span>

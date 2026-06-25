@@ -105,24 +105,35 @@ export default function CloudinaryUpload({
               onChange={handleFileChange}
               disabled={isUploading}
            />
-           <label
-             htmlFor={`upload-${label.replace(/\s+/g, '-')}`}
-             className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer transition-colors w-max
-               ${error ? 'border-red-500 text-red-500 bg-red-50' : 'border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'}
-             `}
-           >
-             {isUploading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Uploading...
-                </>
-             ) : (
-                <>
-                  <UploadCloud className="w-4 h-4" />
-                  {preview ? 'Replace Image' : 'Select File'}
-                </>
+           <div className="flex flex-col items-start gap-1.5">
+             <label
+               htmlFor={`upload-${label.replace(/\s+/g, '-')}`}
+               className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer transition-colors w-max
+                 ${error ? 'border-red-500 text-red-500 bg-red-50' : 'border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900'}
+               `}
+             >
+               {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Uploading...
+                  </>
+               ) : (
+                  <>
+                    <UploadCloud className="w-4 h-4" />
+                    {preview ? 'Replace Image' : 'Select File'}
+                  </>
+               )}
+             </label>
+             {preview && !isUploading && (
+               <button
+                 type="button"
+                 onClick={() => { setPreview(null); onUploadSuccess(''); }}
+                 className="text-[10px] font-semibold text-red-500 hover:text-red-700 transition-colors px-1"
+               >
+                 Remove image
+               </button>
              )}
-           </label>
+           </div>
            
            {error && (
              <span className="flex items-center gap-1 text-[10px] text-red-500 mt-2 font-mono">

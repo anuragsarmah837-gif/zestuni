@@ -111,17 +111,23 @@ export default function InstitutionPortal({
               </div>
 
               {/* Contacts row */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-xs font-mono text-neutral-400">
-                {institution.website && (
-                  <a href={institution.website} target="_blank" referrerPolicy="no-referrer" className="flex items-center gap-1 hover:text-black dark:hover:text-white transition-colors">
-                    <Globe className="w-3.5 h-3.5 text-neutral-400" /> {institution.website.replace('https://', '')}
-                  </a>
-                )}
-                <span>•</span>
-                <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5 text-neutral-400" /> {institution.email}</span>
-                <span>•</span>
-                <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-neutral-400" /> {institution.phone}</span>
-              </div>
+              {(institution.website || institution.email || institution.phone) && (
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-xs font-mono text-neutral-400">
+                  {institution.website && (
+                    <a href={institution.website} target="_blank" referrerPolicy="no-referrer" className="flex items-center gap-1 hover:text-black dark:hover:text-white transition-colors">
+                      <Globe className="w-3.5 h-3.5 text-neutral-400" /> {institution.website.replace('https://', '')}
+                    </a>
+                  )}
+                  {institution.website && (institution.email || institution.phone) && <span>•</span>}
+                  {institution.email && (
+                    <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5 text-neutral-400" /> {institution.email}</span>
+                  )}
+                  {institution.email && institution.phone && <span>•</span>}
+                  {institution.phone && (
+                    <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-neutral-400" /> {institution.phone}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -138,16 +144,19 @@ export default function InstitutionPortal({
           >
             <Grid className="w-4 h-4" /> Uniform Catalog
           </button>
-          <button
-            onClick={() => setActiveTab('about')}
-            className={`px-4 py-3 text-xs sm:text-sm font-semibold tracking-tight uppercase border-b-2 transition-all flex items-center gap-2 ${
-              activeTab === 'about'
-                ? 'border-black text-black dark:border-white dark:text-white font-extrabold'
-                : 'border-transparent text-neutral-400 hover:text-neutral-600'
-            }`}
-          >
-            <Info className="w-4 h-4" /> Institutional About
-          </button>
+          {/* About Tab Button - Only show if there's about data */}
+          {(institution.description || institution.mission || institution.vision) && (
+            <button
+              onClick={() => setActiveTab('about')}
+              className={`px-4 py-3 text-xs sm:text-sm font-semibold tracking-tight uppercase border-b-2 transition-all flex items-center gap-2 ${
+                activeTab === 'about'
+                  ? 'border-black text-black dark:border-white dark:text-white font-extrabold'
+                  : 'border-transparent text-neutral-400 hover:text-neutral-600'
+              }`}
+            >
+              <Info className="w-4 h-4" /> Institutional About
+            </button>
+          )}
 
         </div>
 
@@ -286,39 +295,47 @@ export default function InstitutionPortal({
           {/* 2. ABOUT TAB */}
           {activeTab === 'about' && (
             <div className="bg-white dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-900 rounded-3xl p-6 md:p-8 animate-fadeIn max-w-4xl mx-auto space-y-10">
-              <div className="space-y-4">
-                <h3 className="text-xl sm:text-2xl font-bold font-sans tracking-tight text-neutral-900 dark:text-white uppercase">
-                  Institutional Profile
-                </h3>
-                <p className="text-neutral-500 dark:text-neutral-400 text-sm sm:text-base leading-relaxed">
-                  {institution.description}
-                </p>
-              </div>
+              {institution.description && (
+                <div className="space-y-4">
+                  <h3 className="text-xl sm:text-2xl font-bold font-sans tracking-tight text-neutral-900 dark:text-white uppercase">
+                    Institutional Profile
+                  </h3>
+                  <p className="text-neutral-500 dark:text-neutral-400 text-sm sm:text-base leading-relaxed">
+                    {institution.description}
+                  </p>
+                </div>
+              )}
 
               {/* Grid values */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-neutral-100 dark:border-neutral-900">
-                {/* Mission */}
-                <div className="p-6 bg-neutral-50 dark:bg-neutral-900/40 rounded-2xl border border-neutral-150 dark:border-neutral-800 space-y-3">
-                  <span className="inline-flex w-7 h-7 bg-black text-white dark:bg-white dark:text-black text-xs font-bold items-center justify-center rounded-lg font-mono">M</span>
-                  <h4 className="text-base font-extrabold text-neutral-950 dark:text-white uppercase tracking-wider font-sans">
-                    Academic Mission
-                  </h4>
-                  <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm leading-relaxed">
-                    {institution.mission}
-                  </p>
-                </div>
+              {(institution.mission || institution.vision) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-neutral-100 dark:border-neutral-900">
+                  {/* Mission */}
+                  {institution.mission && (
+                    <div className="p-6 bg-neutral-50 dark:bg-neutral-900/40 rounded-2xl border border-neutral-150 dark:border-neutral-800 space-y-3">
+                      <span className="inline-flex w-7 h-7 bg-black text-white dark:bg-white dark:text-black text-xs font-bold items-center justify-center rounded-lg font-mono">M</span>
+                      <h4 className="text-base font-extrabold text-neutral-950 dark:text-white uppercase tracking-wider font-sans">
+                        Academic Mission
+                      </h4>
+                      <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm leading-relaxed">
+                        {institution.mission}
+                      </p>
+                    </div>
+                  )}
 
-                {/* Vision */}
-                <div className="p-6 bg-neutral-50 dark:bg-neutral-900/40 rounded-2xl border border-neutral-150 dark:border-neutral-800 space-y-3">
-                  <span className="inline-flex w-7 h-7 bg-black text-white dark:bg-white dark:text-black text-xs font-bold items-center justify-center rounded-lg font-mono">V</span>
-                  <h4 className="text-base font-extrabold text-neutral-950 dark:text-white uppercase tracking-wider font-sans">
-                    Future Vision
-                  </h4>
-                  <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm leading-relaxed">
-                    {institution.vision}
-                  </p>
+                  {/* Vision */}
+                  {institution.vision && (
+                    <div className="p-6 bg-neutral-50 dark:bg-neutral-900/40 rounded-2xl border border-neutral-150 dark:border-neutral-800 space-y-3">
+                      <span className="inline-flex w-7 h-7 bg-black text-white dark:bg-white dark:text-black text-xs font-bold items-center justify-center rounded-lg font-mono">V</span>
+                      <h4 className="text-base font-extrabold text-neutral-950 dark:text-white uppercase tracking-wider font-sans">
+                        Future Vision
+                      </h4>
+                      <p className="text-neutral-500 dark:text-neutral-400 text-xs sm:text-sm leading-relaxed">
+                        {institution.vision}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
           )}
 

@@ -47,7 +47,7 @@ export default function ProductDetailModal({
   };
 
   const increaseQuantity = () => {
-    if (quantity < uniform.stockQuantity) setQuantity(prev => prev + 1);
+    if (quantity < 100) setQuantity(prev => prev + 1);
   };
 
   // Image zoom magnification feature
@@ -121,8 +121,8 @@ Please confirm my order.`;
         {/* Modal Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2">
           {/* LEFT: Image Gallery with Magnification */}
-          <div className="p-6 md:p-8 space-y-4 border-r border-neutral-100 dark:border-neutral-900 flex flex-col justify-between">
-            <div>
+          <div className="p-6 md:p-8 space-y-4 border-r border-neutral-100 dark:border-neutral-900 flex flex-col justify-center">
+            <div className="w-full">
               {/* Active Large Image Display Frame */}
               <div
                 className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center border border-neutral-200/50 dark:border-neutral-800 cursor-zoom-in"
@@ -161,11 +161,6 @@ Please confirm my order.`;
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Compliance Note */}
-            <div className="p-4 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-150 dark:border-neutral-800 rounded-xl text-[11px] text-neutral-400 font-mono leading-relaxed mt-4">
-              🛡️ REGULATORY VERIFY: Under strict directives, this item utilizes standardized institutional thread counts. Substitutes are liable for non-compliance fines.
             </div>
           </div>
 
@@ -293,16 +288,10 @@ Please confirm my order.`;
 
                   {/* Textile specs details table */}
                   <div className="mt-6 border border-neutral-200/60 dark:border-neutral-800 rounded-xl overflow-hidden text-xs bg-white dark:bg-black/40">
-                    <div className="grid grid-cols-2 p-3 border-b border-neutral-150 dark:border-neutral-900">
+                    <div className="grid grid-cols-2 p-3">
                       <span className="font-mono text-neutral-400 uppercase tracking-wider">FABRIC COMPOSITE</span>
                       <span className="font-sans font-semibold text-neutral-800 dark:text-white text-right truncate">
                         {uniform.fabricType}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 p-3">
-                      <span className="font-mono text-neutral-400 uppercase tracking-wider">STOCK LEVEL</span>
-                      <span className={`font-sans font-semibold text-right ${uniform.stockQuantity > 20 ? 'text-green-500' : 'text-amber-500'}`}>
-                        {uniform.stockQuantity > 0 ? `${uniform.stockQuantity} Units Verified` : 'Out of Stock'}
                       </span>
                     </div>
                   </div>
@@ -347,7 +336,7 @@ Please confirm my order.`;
                       <button
                         onClick={increaseQuantity}
                         className="p-3 text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
-                        disabled={quantity >= uniform.stockQuantity}
+                        disabled={quantity >= 100}
                       >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
@@ -357,7 +346,6 @@ Please confirm my order.`;
                     <button
                       onClick={() => setShowOrderForm(true)}
                       className="flex-1 py-4 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black rounded-xl text-sm font-extrabold tracking-tight transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg"
-                      disabled={uniform.stockQuantity <= 0}
                     >
                       <MessageCircle className="w-4 h-4 fill-current" />
                       Generate WhatsApp Order

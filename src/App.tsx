@@ -317,7 +317,6 @@ export default function App() {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4 text-white">
         <div className="w-12 h-12 rounded-full border-4 border-neutral-800 border-t-white animate-spin"></div>
-        <div className="text-xs font-mono tracking-widest text-neutral-400 uppercase animate-pulse">Synchronizing with NeonDB...</div>
       </div>
     );
   }

@@ -128,7 +128,10 @@ export default function AdminPanel({
 
   const handleCreateOrEditInst = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!instForm.name || !instForm.slug) return;
+    if (!instForm.name || !instForm.slug || !instForm.logo || !instForm.banner || !instForm.address || !instForm.city || !instForm.pincode) {
+      triggerToast('Please fill all mandatory fields (Name, Logo, Banner, Address, City, Pincode).');
+      return;
+    }
 
     if (editingId) {
       setInstitutions(prev => prev.map(i => i.id === editingId ? { ...i, ...instForm } : i));
@@ -215,7 +218,7 @@ export default function AdminPanel({
     price: 0,
     discountPrice: undefined,
     availableSizes: [],
-    stockQuantity: 0,
+    stockQuantity: 100, // Default to 100 since field is removed
     isArchived: false,
     images: {
       main: '',
@@ -228,7 +231,14 @@ export default function AdminPanel({
 
   const handleCreateOrEditUniform = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uniForm.name || !uniForm.sku) return;
+    if (!uniForm.name) {
+      triggerToast('Garment Name is required.');
+      return;
+    }
+    if (!uniForm.images.main) {
+      triggerToast('Main Display Image is required.');
+      return;
+    }
 
     if (editingId) {
       setUniforms(prev => prev.map(u => u.id === editingId ? { ...u, ...uniForm } : u));
@@ -1093,6 +1103,17 @@ export default function AdminPanel({
                         className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs"
                       />
                     </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-mono text-neutral-400">Fabric Type</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 100% Cotton, Standard Blend"
+                        value={uniForm.fabricType}
+                        onChange={(e) => setUniForm({ ...uniForm, fabricType: e.target.value })}
+                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1123,35 +1144,14 @@ export default function AdminPanel({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Base Price (INR) *</label>
+                      <label className="text-[10px] uppercase font-mono text-neutral-400">Price (INR) *</label>
                       <input
                         type="number"
                         required
                         value={uniForm.price}
-                        onChange={(e) => setUniForm({ ...uniForm, price: parseInt(e.target.value) || 1 })}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs font-mono"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Discount Price (INR)</label>
-                      <input
-                        type="number"
-                        value={uniForm.discountPrice || ''}
-                        onChange={(e) => setUniForm({ ...uniForm, discountPrice: parseInt(e.target.value) || undefined })}
-                        className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs font-mono"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-mono text-neutral-400">Stock Quantity *</label>
-                      <input
-                        type="number"
-                        required
-                        value={uniForm.stockQuantity}
-                        onChange={(e) => setUniForm({ ...uniForm, stockQuantity: parseInt(e.target.value) || 0 })}
+                        onChange={(e) => setUniForm({ ...uniForm, price: parseInt(e.target.value) || 1, discountPrice: undefined })}
                         className="w-full px-3 py-2 bg-neutral-50 dark:bg-black border rounded-lg text-xs font-mono"
                       />
                     </div>
@@ -1193,12 +1193,12 @@ export default function AdminPanel({
 
                   {/* Multi images URLs */}
                   <div className="space-y-1 bg-neutral-50 dark:bg-black/30 p-4 rounded-xl border border-neutral-150 dark:border-neutral-900">
-                    <span className="block text-[10px] uppercase font-mono text-neutral-400 mb-3">Multi-View Image Bindings (URLs from Web)</span>
+                    <span className="block text-[10px] uppercase font-mono text-neutral-400 mb-3">Multi-View Image Bindings (Images)</span>
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                       {/* Main */}
                       <div className="space-y-1">
                         <CloudinaryUpload 
-                          label="Main Display URL *"
+                          label="Main Display Image *"
                           defaultPreview={uniForm.images.main}
                           onUploadSuccess={(url) => setUniForm({ ...uniForm, images: { ...uniForm.images, main: url } })}
                         />
@@ -1206,7 +1206,7 @@ export default function AdminPanel({
                       {/* Front */}
                       <div className="space-y-1">
                         <CloudinaryUpload 
-                          label="Front View URL"
+                          label="Front View Image"
                           defaultPreview={uniForm.images.front}
                           onUploadSuccess={(url) => setUniForm({ ...uniForm, images: { ...uniForm.images, front: url } })}
                         />
@@ -1214,7 +1214,7 @@ export default function AdminPanel({
                       {/* Back */}
                       <div className="space-y-1">
                         <CloudinaryUpload 
-                          label="Back View URL"
+                          label="Back View Image"
                           defaultPreview={uniForm.images.back}
                           onUploadSuccess={(url) => setUniForm({ ...uniForm, images: { ...uniForm.images, back: url } })}
                         />
@@ -1222,7 +1222,7 @@ export default function AdminPanel({
                       {/* Side */}
                       <div className="space-y-1">
                         <CloudinaryUpload 
-                          label="Side View URL"
+                          label="Side View Image"
                           defaultPreview={uniForm.images.side}
                           onUploadSuccess={(url) => setUniForm({ ...uniForm, images: { ...uniForm.images, side: url } })}
                         />
@@ -1266,7 +1266,6 @@ export default function AdminPanel({
                       <th className="p-4">SKU Code</th>
                       <th className="p-4">Uniform Profile</th>
                       <th className="p-4">Pricing</th>
-                      <th className="p-4">Stock level</th>
                       <th className="p-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1285,11 +1284,6 @@ export default function AdminPanel({
                           {uni.discountPrice ? (
                             <span>₹{uni.discountPrice} <span className="text-[9px] line-through text-neutral-400">₹{uni.price}</span></span>
                           ) : `₹${uni.price}`}
-                        </td>
-                        <td className="p-4 font-mono">
-                          <span className={`font-bold ${uni.stockQuantity > 20 ? 'text-green-500' : 'text-amber-500'}`}>
-                            {uni.stockQuantity} Pcs
-                          </span>
                         </td>
                         <td className="p-4 text-right space-x-2">
                           <button
