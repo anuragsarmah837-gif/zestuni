@@ -14,9 +14,27 @@ export default function ContactSection({ settings, onNewSubmission }: ContactSec
   const [message, setMessage] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !message) return;
+    if (!name || !email || !institutionName || !message) return;
+
+    try {
+      await fetch("https://formsubmit.co/ajax/zestwearuniforms@gmail.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          Name: name,
+          Email: email,
+          Institution: institutionName,
+          Message: message
+        })
+      });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
 
     onNewSubmission({
       name,
@@ -170,9 +188,10 @@ export default function ContactSection({ settings, onNewSubmission }: ContactSec
 
                 {/* Institution Name */}
                 <div className="space-y-2">
-                  <label className="block text-xs font-mono uppercase tracking-wider text-neutral-400">Institution Name</label>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-neutral-400">Institution Name *</label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g. Bahona College, Jorhat"
                     value={institutionName}
                     onChange={(e) => setInstitutionName(e.target.value)}
