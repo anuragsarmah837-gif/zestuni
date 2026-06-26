@@ -20,7 +20,7 @@ export default function HeroSlider({ slides, onFindUniform, onPartnerWithUs }: H
     if (!isHovered) {
       autoplayTimerRef.current = setInterval(() => {
         setCurrentIndex(prevIndex => (prevIndex + 1) % activeSlides.length);
-      }, 6000);
+      }, 3000);
     }
 
     return () => {
