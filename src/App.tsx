@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  CheckCircle2, MapPin, Globe, Mail, Phone, Search, Sliders, Settings as ConfigIcon,
-  Sparkles, ExternalLink, School, HelpCircle, GraduationCap, X, ChevronRight, Eye
+  CheckCircle2, MapPin, Search, ExternalLink, School
 } from 'lucide-react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 
