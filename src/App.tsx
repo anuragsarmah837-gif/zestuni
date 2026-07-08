@@ -49,8 +49,55 @@ export default function App() {
     }
   }
 
-  const [activeView, setActiveView] = useState<string>('home');
-  const [selectedInstitutionSlug, setSelectedInstitutionSlug] = useState<string | null>(null);
+  // Helper to parse current hash into activeView and selectedInstitutionSlug
+  const parseHash = () => {
+    const hash = window.location.hash || '#/';
+    if (hash.startsWith('#/portal/')) {
+      const slug = hash.replace('#/portal/', '');
+      return { activeView: 'home', selectedInstitutionSlug: slug };
+    } else {
+      const view = hash.replace('#/', '') || 'home';
+      const validViews = ['home', 'institutions', 'uniforms', 'how-it-works', 'about', 'contact', 'admin'];
+      if (validViews.includes(view)) {
+        return { activeView: view, selectedInstitutionSlug: null };
+      }
+      return { activeView: 'home', selectedInstitutionSlug: null };
+    }
+  };
+
+  const initialRoute = parseHash();
+  const [activeViewVal, setActiveViewVal] = useState<string>(initialRoute.activeView);
+  const [selectedInstitutionSlugVal, setSelectedInstitutionSlugVal] = useState<string | null>(initialRoute.selectedInstitutionSlug);
+
+  const activeView = activeViewVal;
+  const selectedInstitutionSlug = selectedInstitutionSlugVal;
+
+  const setActiveView = useCallback((view: string | ((prev: string) => string)) => {
+    const nextView = typeof view === 'function' ? view(activeViewVal) : view;
+    window.location.hash = `#/${nextView}`;
+  }, [activeViewVal]);
+
+  const setSelectedInstitutionSlug = useCallback((slug: string | null | ((prev: string | null) => string | null)) => {
+    const nextSlug = typeof slug === 'function' ? slug(selectedInstitutionSlugVal) : slug;
+    if (nextSlug) {
+      window.location.hash = `#/portal/${nextSlug}`;
+    } else {
+      if (window.location.hash.startsWith('#/portal/')) {
+        window.location.hash = `#/${activeViewVal}`;
+      }
+    }
+  }, [activeViewVal, selectedInstitutionSlugVal]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const route = parseHash();
+      setActiveViewVal(route.activeView);
+      setSelectedInstitutionSlugVal(route.selectedInstitutionSlug);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // ----------------------------------------------------
   // SYNC STATE TRACKING
@@ -254,14 +301,12 @@ export default function App() {
 
   // Handle direct navigation routing callback
   const handleSelectInstitution = (slug: string) => {
-    setSelectedInstitutionSlug(slug);
-    setActiveView('home'); // resets general path view to highlight portal
+    window.location.hash = `#/portal/${slug}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePartnerWithUs = () => {
-    setActiveView('contact');
-    setSelectedInstitutionSlug(null);
+    window.location.hash = '#/contact';
     setTimeout(() => {
       const contactSection = document.getElementById('contact');
       if (contactSection) {
@@ -271,8 +316,7 @@ export default function App() {
   };
 
   const handleFindUniform = () => {
-    setActiveView('uniforms');
-    setSelectedInstitutionSlug(null);
+    window.location.hash = '#/uniforms';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
