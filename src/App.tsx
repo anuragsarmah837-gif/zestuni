@@ -341,7 +341,11 @@ export default function App() {
     if (cityFilter !== 'all' && inst.city !== cityFilter) return false;
     if (stateFilter !== 'all' && inst.state !== stateFilter) return false;
     if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
+      // If the user searches for the site brand itself, bypass the school/college filter
+      if (q.includes('zestwear') || q.includes('zest wear') || q === 'zest' || q === 'zestwear uniform') {
+        return true;
+      }
       return (
         inst.name.toLowerCase().includes(q) ||
         inst.city.toLowerCase().includes(q) ||
