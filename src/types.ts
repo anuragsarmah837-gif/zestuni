@@ -65,6 +65,7 @@ export interface Uniform {
   availableSizes: string[]; // e.g. ["S", "M", "L", "XL"]
   stockQuantity: number;
   isArchived: boolean;
+  showOnHomepage?: boolean;
   images: {
     main: string;
     front?: string;

@@ -94,7 +94,8 @@ app.get('/api/data', async (req, res) => {
       availableSizes: row.available_sizes,
       stockQuantity: row.stock_quantity,
       isArchived: row.is_archived,
-      images: row.images
+      images: row.images,
+      showOnHomepage: row.show_on_homepage !== false
     }));
 
     const notices = noticesResult.rows.map(row => ({
@@ -263,18 +264,18 @@ app.post('/api/sync', async (req, res) => {
         await client.query(
           `INSERT INTO uniforms (
             id, institution_id, name, sku, category_id, gender, description, 
-            fabric_type, price, discount_price, available_sizes, stock_quantity, is_archived, images
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            fabric_type, price, discount_price, available_sizes, stock_quantity, is_archived, images, show_on_homepage
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
           ON CONFLICT (id) DO UPDATE SET 
             institution_id = EXCLUDED.institution_id, name = EXCLUDED.name, sku = EXCLUDED.sku,
             category_id = EXCLUDED.category_id, gender = EXCLUDED.gender, description = EXCLUDED.description,
             fabric_type = EXCLUDED.fabric_type, price = EXCLUDED.price, discount_price = EXCLUDED.discount_price,
             available_sizes = EXCLUDED.available_sizes, stock_quantity = EXCLUDED.stock_quantity,
-            is_archived = EXCLUDED.is_archived, images = EXCLUDED.images`,
+            is_archived = EXCLUDED.is_archived, images = EXCLUDED.images, show_on_homepage = EXCLUDED.show_on_homepage`,
           [
             item.id, item.institutionId, item.name, item.sku, item.categoryId, item.gender, item.description,
             item.fabricType, item.price, item.discountPrice || null, item.availableSizes, item.stockQuantity,
-            item.isArchived, JSON.stringify(item.images)
+            item.isArchived, JSON.stringify(item.images), item.showOnHomepage !== false
           ]
         );
       }

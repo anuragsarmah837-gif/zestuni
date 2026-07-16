@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS uniforms (
     available_sizes TEXT[] NOT NULL,
     stock_quantity INT DEFAULT 0,
     is_archived BOOLEAN DEFAULT FALSE,
-    images JSONB NOT NULL
+    images JSONB NOT NULL,
+    show_on_homepage BOOLEAN DEFAULT TRUE
 );
 
 -- Institution Notices Table

@@ -220,6 +220,7 @@ export default function AdminPanel({
     availableSizes: [],
     stockQuantity: 100, // Default to 100 since field is removed
     isArchived: false,
+    showOnHomepage: true,
     images: {
       main: '',
       front: '',
@@ -420,6 +421,7 @@ export default function AdminPanel({
       institutionId: selectedInstId || '', name: '', sku: '', categoryId: categories[0]?.id || '', gender: 'unisex',
       description: '', fabricType: '', price: 0, discountPrice: undefined,
       availableSizes: [], stockQuantity: 0, isArchived: false,
+      showOnHomepage: true,
       images: { main: '', front: '', back: '', side: '', gallery: [] }
     });
     setNoticeForm({
@@ -450,7 +452,9 @@ export default function AdminPanel({
         categoryId: item.categoryId, gender: item.gender, description: item.description,
         fabricType: item.fabricType, price: item.price, discountPrice: item.discountPrice,
         availableSizes: item.availableSizes, stockQuantity: item.stockQuantity,
-        isArchived: item.isArchived, images: item.images
+        isArchived: item.isArchived,
+        showOnHomepage: item.showOnHomepage !== false,
+        images: item.images
       });
     } else if (type === 'notice') {
       setNoticeForm({
@@ -1144,7 +1148,7 @@ export default function AdminPanel({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] uppercase font-mono text-neutral-400">Price (INR) *</label>
                       <input
@@ -1168,6 +1172,22 @@ export default function AdminPanel({
                             className="rounded border-neutral-300 dark:border-neutral-800 text-black focus:ring-0 w-4 h-4"
                           />
                           <span className="text-xs">Archive SKU</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Show on Homepage switch */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-mono text-neutral-400 flex items-center">Homepage Display</label>
+                      <div className="pt-2">
+                        <label className="inline-flex items-center cursor-pointer gap-2">
+                          <input
+                            type="checkbox"
+                            checked={uniForm.showOnHomepage !== false}
+                            onChange={(e) => setUniForm({ ...uniForm, showOnHomepage: e.target.checked })}
+                            className="rounded border-neutral-300 dark:border-neutral-800 text-black focus:ring-0 w-4 h-4"
+                          />
+                          <span className="text-xs">Show on Homepage</span>
                         </label>
                       </div>
                     </div>
@@ -1266,6 +1286,7 @@ export default function AdminPanel({
                       <th className="p-4">SKU Code</th>
                       <th className="p-4">Uniform Profile</th>
                       <th className="p-4">Pricing</th>
+                      <th className="p-4">Homepage</th>
                       <th className="p-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1284,6 +1305,18 @@ export default function AdminPanel({
                           {uni.discountPrice ? (
                             <span>₹{uni.discountPrice} <span className="text-[9px] line-through text-neutral-400">₹{uni.price}</span></span>
                           ) : `₹${uni.price}`}
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => {
+                              const updated = uniforms.map(u => u.id === uni.id ? { ...u, showOnHomepage: u.showOnHomepage === false } : u);
+                              setUniforms(updated);
+                              triggerToast('Uniform homepage visibility updated.');
+                            }}
+                            className={`px-2 py-0.5 rounded text-[9px] font-mono uppercase font-bold border transition-colors ${uni.showOnHomepage !== false ? 'bg-green-500/10 text-green-500 border-green-500/10 hover:bg-green-500/20' : 'bg-neutral-100 text-neutral-400 border-neutral-200 hover:bg-neutral-200'}`}
+                          >
+                            {uni.showOnHomepage !== false ? 'Featured' : 'Hidden'}
+                          </button>
                         </td>
                         <td className="p-4 text-right space-x-2">
                           <button

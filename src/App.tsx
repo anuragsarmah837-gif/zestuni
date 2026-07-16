@@ -641,6 +641,9 @@ export default function App() {
               institutions={institutions}
               onQuickView={(uni) => setSelectedUniformForQuickView(uni)}
               onInstantOrder={(uni) => setSelectedUniformForQuickView(uni)}
+              limit={8}
+              filterHomepage={true}
+              onViewAll={handleFindUniform}
             />
 
             {/* Textile standards details */}

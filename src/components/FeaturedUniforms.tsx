@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, ShoppingBag, EyeOff, Sparkles, Pin } from 'lucide-react';
+import { Eye, ShoppingBag, EyeOff, Sparkles, Pin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Uniform, UniformCategory, Institution } from '../types';
 
 interface FeaturedUniformsProps {
@@ -8,6 +8,9 @@ interface FeaturedUniformsProps {
   institutions: Institution[];
   onQuickView: (uniform: Uniform) => void;
   onInstantOrder: (uniform: Uniform) => void;
+  limit?: number;
+  filterHomepage?: boolean;
+  onViewAll?: () => void;
 }
 
 export default function FeaturedUniforms({
@@ -15,16 +18,33 @@ export default function FeaturedUniforms({
   categories,
   institutions,
   onQuickView,
-  onInstantOrder
+  onInstantOrder,
+  limit,
+  filterHomepage,
+  onViewAll
 }: FeaturedUniformsProps) {
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const handleCategoryChange = (slug: string) => {
+    setSelectedCategorySlug(slug);
+    setCurrentPage(1);
+  };
 
   const visibleUniforms = uniforms.filter(u => {
     if (u.isArchived) return false;
+    if (filterHomepage && u.showOnHomepage === false) return false;
     if (selectedCategorySlug === 'all') return true;
     const category = categories.find(c => c.id === u.categoryId);
     return category?.slug === selectedCategorySlug;
   });
+
+  const itemsPerPage = 16;
+  const totalPages = Math.ceil(visibleUniforms.length / itemsPerPage);
+
+  const displayedUniforms = limit 
+    ? visibleUniforms.slice(0, limit) 
+    : visibleUniforms.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const getInstitutionName = (id: string) => {
     const inst = institutions.find(i => i.id === id);
@@ -56,7 +76,7 @@ export default function FeaturedUniforms({
         {/* Dynamic Category Sliders/Pills */}
         <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
           <button
-            onClick={() => setSelectedCategorySlug('all')}
+            onClick={() => handleCategoryChange('all')}
             className={`px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
               selectedCategorySlug === 'all'
                 ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
@@ -68,7 +88,7 @@ export default function FeaturedUniforms({
           {categories.map(cat => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCategorySlug(cat.slug)}
+              onClick={() => handleCategoryChange(cat.slug)}
               className={`px-5 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
                 selectedCategorySlug === cat.slug
                   ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
@@ -81,14 +101,14 @@ export default function FeaturedUniforms({
         </div>
 
         {/* Uniform Grid */}
-        {visibleUniforms.length === 0 ? (
+        {displayedUniforms.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-black border border-neutral-100 dark:border-neutral-900 rounded-3xl">
             <EyeOff className="w-12 h-12 text-neutral-300 mx-auto mb-4 animate-none" />
             <p className="text-neutral-500 dark:text-neutral-400 font-sans">No uniforms currently seeded under this category.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {visibleUniforms.map(uniform => {
+            {displayedUniforms.map(uniform => {
               const discountPercentage = uniform.discountPrice
                 ? Math.round(((uniform.price - uniform.discountPrice) / uniform.price) * 100)
                 : 0;
@@ -181,6 +201,78 @@ export default function FeaturedUniforms({
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!limit && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-12">
+            <button
+              onClick={() => {
+                if (currentPage > 1) {
+                  setCurrentPage(currentPage - 1);
+                  document.getElementById('featured-uniforms')?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              disabled={currentPage === 1}
+              className={`p-2.5 rounded-xl border border-neutral-200/50 dark:border-neutral-800 transition-all duration-200 flex items-center justify-center
+                ${currentPage === 1 
+                  ? 'opacity-40 cursor-not-allowed text-neutral-400' 
+                  : 'bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-black dark:hover:border-white shadow-xs hover:scale-102 cursor-pointer'
+                }
+              `}
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => {
+                  setCurrentPage(page);
+                  document.getElementById('featured-uniforms')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className={`w-10 h-10 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer
+                  ${currentPage === page
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-md scale-102'
+                    : 'bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-900 border border-neutral-200/50 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-black dark:hover:border-white hover:scale-102'
+                  }
+                `}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              onClick={() => {
+                if (currentPage < totalPages) {
+                  setCurrentPage(currentPage + 1);
+                  document.getElementById('featured-uniforms')?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              disabled={currentPage === totalPages}
+              className={`p-2.5 rounded-xl border border-neutral-200/50 dark:border-neutral-800 transition-all duration-200 flex items-center justify-center
+                ${currentPage === totalPages 
+                  ? 'opacity-40 cursor-not-allowed text-neutral-400' 
+                  : 'bg-white hover:bg-neutral-50 dark:bg-black dark:hover:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-black dark:hover:border-white shadow-xs hover:scale-102 cursor-pointer'
+                }
+              `}
+              title="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {onViewAll && (
+          <div className="mt-12 text-center">
+            <button
+              onClick={onViewAll}
+              className="inline-flex items-center gap-2 px-6 py-3.5 bg-black hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-black rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 shadow-md hover:scale-102 cursor-pointer font-sans"
+            >
+              View All Uniforms
+            </button>
           </div>
         )}
       </div>
