@@ -108,7 +108,7 @@ Please confirm my order.`;
     <div id="product-modal-backdrop" className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
       {/* Container Box */}
       <div className="relative w-full max-w-5xl bg-white dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-900 rounded-3xl overflow-hidden shadow-2xl transition-all h-[90vh] md:h-auto overflow-y-auto">
-        
+
         {/* Dismiss Button */}
         <button
           onClick={onClose}
@@ -153,9 +153,8 @@ Please confirm my order.`;
                   <button
                     key={idx}
                     onClick={() => setActiveImage(img)}
-                    className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                      activeImage === img ? 'border-black dark:border-white scale-102' : 'border-transparent opacity-60'
-                    }`}
+                    className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${activeImage === img ? 'border-black dark:border-white scale-102' : 'border-transparent opacity-60'
+                      }`}
                   >
                     <img src={img} alt="" className="w-full h-full object-cover" />
                   </button>
@@ -257,7 +256,7 @@ Please confirm my order.`;
                     <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
                       <img src={activeInstitution?.logo} alt="" className="w-full h-full object-cover" />
                     </div>
-                    <span>{institutionName} Code Compliance</span>
+                    <span>{institutionName}</span>
                   </div>
 
                   {/* Pricing Matrix */}
@@ -307,11 +306,10 @@ Please confirm my order.`;
                         <button
                           key={size}
                           onClick={() => setSelectedSize(size)}
-                          className={`min-w-[44px] h-[44px] rounded-xl text-xs font-bold font-sans tracking-wide transition-all ${
-                            selectedSize === size
+                          className={`min-w-[44px] h-[44px] rounded-xl text-xs font-bold font-sans tracking-wide transition-all ${selectedSize === size
                               ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
                               : 'bg-white dark:bg-black border border-neutral-205 dark:border-neutral-800 text-neutral-600 hover:border-black'
-                          }`}
+                            }`}
                         >
                           {size}
                         </button>
