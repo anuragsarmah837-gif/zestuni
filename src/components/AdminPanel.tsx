@@ -1197,7 +1197,7 @@ export default function AdminPanel({
                   <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-mono text-neutral-400 block pb-1">Available Authorized Sizes *</label>
                     <div className="flex flex-wrap gap-4 text-xs">
-                      {['XS', 'S', 'M', 'L', 'XL', 'XXL', '24', '26', '28', '30', '32', '34', '36'].map(sz => (
+                      {['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '22', '24', '26', '28', '30', '32', '34', '36', '38', '40', '42', '44', '46', '48'].map(sz => (
                         <label key={sz} className="inline-flex items-center gap-1.5 cursor-pointer font-semibold font-sans">
                           <input
                             type="checkbox"

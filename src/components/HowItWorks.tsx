@@ -17,7 +17,7 @@ export default function HowItWorks() {
     {
       step: '03',
       title: 'Choose Size',
-      description: 'Select from available sizes (XS to XXL) and adjust your required purchase quantity.',
+      description: 'Select from available sizes (XS to XXXL, 22 to 48) and adjust your required purchase quantity.',
       icon: Sparkles
     },
     {

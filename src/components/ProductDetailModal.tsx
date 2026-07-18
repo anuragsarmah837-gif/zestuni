@@ -137,7 +137,7 @@ Please confirm my order.`;
                   src={activeImage}
                   alt={uniform.name}
                   style={isZoomed ? zoomStyle : {}}
-                  className="w-full h-full object-cover transition-transform duration-100"
+                  className="w-full h-full object-contain transition-transform duration-100"
                 />
 
                 {!isZoomed && (
